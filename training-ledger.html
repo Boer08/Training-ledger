@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Training Ledger</title>
+<style>
+  :root{
+    --bg:#0d1418; --panel:#131d23; --panel2:#182630; --line:#22333d;
+    --txt:#e8eef1; --dim:#8fa3ad; --acc:#4fc3f7;
+    --green:#3ddc84; --amber:#ffc857; --red:#ff5d5d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px;}
+  header{padding:16px 16px 8px;}
+  .kicker{font-size:11px; letter-spacing:2px; color:var(--dim); text-transform:uppercase;}
+  h1{margin:4px 0 2px; font-size:24px;}
+  .sub{color:var(--dim); font-size:14px; margin:0 0 8px;}
+  #errbox{display:none; background:#3a1518; color:#ffb4b4; padding:10px 14px; font-size:13px;
+    border:1px solid #a33; border-radius:8px; margin:8px 16px; white-space:pre-wrap;}
+  nav{display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:6px; padding:8px 16px;
+    border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5;}
+  nav button{flex:0 0 auto; background:var(--panel); color:var(--dim); border:1px solid var(--line);
+    border-radius:20px; padding:8px 14px; font-size:14px;}
+  nav button.on{background:var(--acc); color:#04222e; border-color:var(--acc); font-weight:600;}
+  main{padding:12px 16px 90px;}
+  section{display:none;}
+  section.on{display:block;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; margin:0 0 12px;}
+  .card h2{margin:0 0 4px; font-size:17px;}
+  .card h3{margin:12px 0 6px; font-size:14px; color:var(--acc);}
+  .why{color:var(--dim); font-size:13px; margin:2px 0 8px;}
+  label{display:block; font-size:13px; color:var(--dim); margin:8px 0 4px;}
+  input[type=number], input[type=text], input[type=date], select, textarea{
+    width:100%; background:var(--panel2); color:var(--txt); border:1px solid var(--line);
+    border-radius:8px; padding:10px; font-size:16px; -webkit-appearance:none; appearance:none;}
+  textarea{min-height:110px; font-family:Menlo,monospace; font-size:12px;}
+  .row{display:flex; gap:8px;}
+  .row > *{flex:1; min-width:0;}
+  .btn{display:inline-block; background:var(--acc); color:#04222e; border:none; border-radius:8px;
+    padding:12px 16px; font-size:15px; font-weight:600; margin-top:10px;}
+  .btn.ghost{background:var(--panel2); color:var(--txt); border:1px solid var(--line);}
+  .light{display:inline-block; padding:6px 14px; border-radius:16px; font-weight:700; font-size:14px; margin-top:8px;}
+  .light.green{background:rgba(61,220,132,.15); color:var(--green); border:1px solid var(--green);}
+  .light.amber{background:rgba(255,200,87,.15); color:var(--amber); border:1px solid var(--amber);}
+  .light.red{background:rgba(255,93,93,.15); color:var(--red); border:1px solid var(--red);}
+  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:6px;}
+  th,td{border-bottom:1px solid var(--line); padding:7px 4px; text-align:left;}
+  th{color:var(--dim); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.5px;}
+  td input{padding:8px 6px; font-size:16px;}
+  .setw{width:34px; color:var(--dim);}
+  .tag{font-size:11px; color:var(--dim);}
+  .warn{background:rgba(255,200,87,.12); border:1px solid var(--amber); color:var(--amber);
+    border-radius:8px; padding:10px; font-size:13px; margin-top:8px; display:none;}
+  .opt{opacity:.75;}
+  .weekpick{display:flex; gap:6px; margin:0 0 12px;}
+  .weekpick button{flex:1; background:var(--panel); color:var(--dim); border:1px solid var(--line);
+    border-radius:8px; padding:10px; font-size:14px;}
+  .weekpick button.on{background:var(--panel2); color:var(--txt); border-color:var(--acc);}
+  .saved{color:var(--green); font-size:13px; margin-left:8px; display:none;}
+  ul{padding-left:18px; margin:6px 0;}
+  li{margin:4px 0; font-size:14px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Block 1 &middot; Weeks 1&ndash;2 &middot; Review after Week 2</div>
+  <h1>Training Ledger</h1>
+  <p class="sub">Three lifting sessions per week. Log every set. Export at the end of each week.</p>
+</header>
+<div id="errbox"></div>
+<nav id="tabs"></nav>
+<main id="main"></main>
+
+<script>
+/* On-screen error reporter: if anything fails, show it instead of a blank page */
+window.onerror = function(msg, src, line){
+  var b = document.getElementById('errbox');
+  if (b){ b.style.display = 'block'; b.textContent = 'Script error: ' + msg + ' (line ' + line + ')'; }
+  return false;
+};
+
+(function(){
+'use strict';
+
+/* ---------- storage ---------- */
+var KEY = 'ledger_v2';
+var S = {};
+try { S = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ S = {}; }
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ showErr('Could not save data: ' + e.message); }
+}
+function showErr(t){
+  var b = document.getElementById('errbox');
+  b.style.display = 'block'; b.textContent = t;
+}
+function get(path, dflt){
+  var parts = path.split('.'); var cur = S;
+  for (var i=0;i<parts.length;i++){
+    if (cur == null || typeof cur !== 'object' || !(parts[i] in cur)) return dflt;
+    cur = cur[parts[i]];
+  }
+  return (cur == null) ? dflt : cur;
+}
+function set(path, val){
+  var parts = path.split('.'); var cur = S;
+  for (var i=0;i<parts.length-1;i++){
+    if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] == null) cur[parts[i]] = {};
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length-1]] = val;
+  save();
+}
+function todayStr(){
+  var d = new Date();
+  var m = ('0'+(d.getMonth()+1)).slice(-2), day = ('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+m+'-'+day;
+}
+
+/* ---------- programme data ---------- */
+/* Prior working loads: box squat 120, bench 100-110, dead 150, OHP 60, row 80,
+   incline DB 44/hand, RDL 90. Weeks 1-2 = ramp (~80% then ~90%). */
+var PROG = {
+  A: {
+    name: 'Session A',
+    note: 'Squat day. Knee-load tier is set by this morning\u2019s check. HSR tempo on squats: 3 s down, 3 s up.',
+    ex: [
+      {id:'boxsquat', n:'Box Squat (high bar, parallel box, HSR 3-3)', sets:4,
+       w:{1:'95', 2:'105'}, reps:'6', rpe:'7', rest:'3 min', tier:true,
+       why:'HSR loading is the primary patellar tendon treatment stimulus. Box depth controls joint stress; the box is the long-term default, not a regression.'},
+      {id:'bench', n:'Bench Press', sets:4, w:{1:'85', 2:'95'}, reps:'5', rpe:'7\u20138', rest:'2.5\u20133 min',
+       why:'Ramp toward 100\u2013110 kg working range.'},
+      {id:'rowA', n:'Barbell Row', sets:3, w:{1:'65', 2:'72.5'}, reps:'8', rpe:'7', rest:'2 min',
+       why:'Upper back balance for pressing volume; supports shoulder health.'}
+    ]
+  },
+  B: {
+    name: 'Session B',
+    note: 'Hinge + press. Deadlift is a straight set with full rest \u2014 never supersetted. OHP and chins may be paired (75\u201390 s between pairs).',
+    ex: [
+      {id:'dead', n:'Deadlift', sets:3, w:{1:'120', 2:'135'}, reps:'5', rpe:'7', rest:'3 min',
+       why:'Ramp toward 150 kg. Straight sets, full rest.'},
+      {id:'ohp', n:'Overhead Press (standing barbell)', sets:4, w:{1:'47.5', 2:'52.5'}, reps:'6', rpe:'7', rest:'pair 75\u201390 s',
+       why:'Pair with chin-ups (antagonist superset) to save time.'},
+      {id:'chinB', n:'Chin-ups (neutral grip)', sets:3, w:{1:'BW', 2:'BW'}, reps:'to 10/10/8', rpe:'8', rest:'pair 75\u201390 s',
+       why:'Neutral grip in B given shoulder history. Add load once 10/10/8 is reached.'},
+      {id:'wallsit', n:'Wall Sit (isometric)', sets:3, w:{1:'BW', 2:'BW'}, reps:'45 s', rpe:'\u2013', rest:'60 s',
+       why:'Isometric analgesic + tendon loading; complements HSR work.'},
+      {id:'pushd', n:'Triceps Pushdown (optional \u2014 skip if short on time)', sets:2, w:{1:'\u2013', 2:'\u2013'}, reps:'12', rpe:'8', rest:'60 s', opt:true,
+       why:'Preferred over machine OHP: targets triceps without duplicating pressing volume on the shoulder.'}
+    ]
+  },
+  C: {
+    name: 'Session C',
+    note: 'RDL is a straight set. Incline DB press pairs with pull-ups; rows pair with hammer curls (75\u201390 s between pairs).',
+    ex: [
+      {id:'incline', n:'Incline DB Press', sets:4, w:{1:'36', 2:'40'}, reps:'8', rpe:'7\u20138', rest:'pair 75\u201390 s',
+       why:'Per hand. Ramp toward 44 kg.'},
+      {id:'pullC', n:'Pull-ups (pronated grip)', sets:3, w:{1:'BW', 2:'BW'}, reps:'to 10/10/8', rpe:'8', rest:'pair 75\u201390 s',
+       why:'Pronated in C; grip just outside shoulder width given shoulder history.'},
+      {id:'rdl', n:'Romanian Deadlift', sets:3, w:{1:'70', 2:'80'}, reps:'8', rpe:'7', rest:'2.5 min',
+       why:'Straight set. Ramp toward 90 kg. Posterior chain with low knee load.'},
+      {id:'rowC', n:'Barbell Row', sets:3, w:{1:'65', 2:'72.5'}, reps:'8', rpe:'7', rest:'pair 75\u201390 s',
+       why:'Pairs with hammer curls.'},
+      {id:'hammer', n:'Hammer Curls (optional \u2014 skip if short on time)', sets:2, w:{1:'\u2013', 2:'\u2013'}, reps:'10', rpe:'8', rest:'pair', opt:true,
+       why:'Elbow/forearm health; always last, always optional.'}
+    ]
+  }
+};
+
+/* ---------- tabs ---------- */
+var TABS = [
+  {id:'morning', label:'Morning'},
+  {id:'A', label:'A'},
+  {id:'B', label:'B'},
+  {id:'C', label:'C'},
+  {id:'week', label:'Week'},
+  {id:'cardio', label:'Cardio'},
+  {id:'stretch', label:'Stretch'},
+  {id:'nutrition', label:'Nutrition'},
+  {id:'export', label:'Export'}
+];
+var navEl = document.getElementById('tabs');
+var mainEl = document.getElementById('main');
+TABS.forEach(function(t){
+  var b = document.createElement('button');
+  b.textContent = t.label;
+  b.setAttribute('data-tab', t.id);
+  b.addEventListener('click', function(){ showTab(t.id); });
+  navEl.appendChild(b);
+  var s = document.createElement('section');
+  s.id = 'tab-' + t.id;
+  mainEl.appendChild(s);
+});
+function showTab(id){
+  var i, btns = navEl.children, secs = mainEl.children;
+  for (i=0;i<btns.length;i++) btns[i].className = (btns[i].getAttribute('data-tab')===id) ? 'on' : '';
+  for (i=0;i<secs.length;i++) secs[i].className = (secs[i].id==='tab-'+id) ? 'on' : '';
+  set('ui.tab', id);
+  if (id==='A') renderTier();
+}
+
+/* ---------- morning check ---------- */
+function trafficLight(pain, stiff, swell, jline){
+  if (pain>=5 || swell>=2 || jline>=5) return 'red';
+  if (pain>=3 || stiff>30 || jline>=3) return 'amber';
+  return 'green';
+}
+function buildMorning(){
+  var el = document.getElementById('tab-morning');
+  el.innerHTML =
+    '<div class="card">'+
+    '<h2>Morning Check</h2>'+
+    '<p class="why">Complete before Session A days. Sets today\u2019s knee-load tier automatically.</p>'+
+    '<label>Date</label><input type="date" id="mc-date">'+
+    '<label>Pain going downstairs (0\u201310)</label><input type="number" id="mc-pain" inputmode="numeric" min="0" max="10">'+
+    '<label>Morning stiffness (minutes)</label><input type="number" id="mc-stiff" inputmode="numeric" min="0">'+
+    '<label>Swelling / effusion (0 = none, 1 = mild, 2 = visible, 3 = tense)</label><input type="number" id="mc-swell" inputmode="numeric" min="0" max="3">'+
+    '<label>Joint-line tenderness (0\u201310)</label><input type="number" id="mc-jline" inputmode="numeric" min="0" max="10">'+
+    '<button class="btn" id="mc-save">Save check</button><span class="saved" id="mc-saved">Saved \u2713</span>'+
+    '<div id="mc-light"></div>'+
+    '</div>';
+  document.getElementById('mc-date').value = todayStr();
+  var d = get('morning.'+todayStr(), null);
+  if (d){
+    document.getElementById('mc-pain').value = d.pain;
+    document.getElementById('mc-stiff').value = d.stiff;
+    document.getElementById('mc-swell').value = d.swell;
+    document.getElementById('mc-jline').value = d.jline;
+    paintLight(d.light);
+  }
+  document.getElementById('mc-save').addEventListener('click', function(){
+    var date = document.getElementById('mc-date').value || todayStr();
+    var pain = +document.getElementById('mc-pain').value || 0;
+    var stiff = +document.getElementById('mc-stiff').value || 0;
+    var swell = +document.getElementById('mc-swell').value || 0;
+    var jline = +document.getElementById('mc-jline').value || 0;
+    var light = trafficLight(pain, stiff, swell, jline);
+    set('morning.'+date, {pain:pain, stiff:stiff, swell:swell, jline:jline, light:light});
+    paintLight(light);
+    flash('mc-saved');
+    renderTier();
+  });
+}
+function paintLight(light){
+  var box = document.getElementById('mc-light');
+  var txt = {green:'GREEN \u2014 full prescribed load', amber:'AMBER \u2014 reduce squat load ~12.5%, keep tempo', red:'RED \u2014 no squats today: Spanish squat isometrics 5\u00d745 s instead'};
+  box.innerHTML = '<span class="light '+light+'">'+txt[light]+'</span>';
+}
+function flash(id){
+  var e = document.getElementById(id);
+  e.style.display = 'inline';
+  setTimeout(function(){ e.style.display = 'none'; }, 1500);
+}
+
+/* ---------- sessions ---------- */
+function curWeek(){ return get('ui.week', 1); }
+function buildSession(sid){
+  var p = PROG[sid];
+  var el = document.getElementById('tab-'+sid);
+  var wk = curWeek();
+  var h = '<div class="weekpick">'+
+    '<button data-w="1" class="'+(wk===1?'on':'')+'">Week 1</button>'+
+    '<button data-w="2" class="'+(wk===2?'on':'')+'">Week 2</button></div>';
+  h += '<div class="card"><h2>'+p.name+'</h2><p class="why">'+p.note+'</p></div>';
+  if (sid==='A'){
+    h += '<div class="card" id="tierbox"></div>';
+  }
+  p.ex.forEach(function(ex){
+    var target = ex.w[wk];
+    h += '<div class="card'+(ex.opt?' opt':'')+'"><h2 style="font-size:15px">'+ex.n+'</h2>'+
+      '<p class="why">'+ex.why+'</p>'+
+      '<p class="tag">Target: '+ex.sets+' \u00d7 '+ex.reps+' @ '+target+(target==='BW'||target==='\u2013'?'':' kg')+' \u00b7 RPE '+ex.rpe+' \u00b7 Rest '+ex.rest+'</p>'+
+      '<table><tr><th class="setw">Set</th><th>kg</th><th>Reps</th><th>RPE</th></tr>';
+    for (var s=1; s<=ex.sets; s++){
+      var base = 'log.w'+wk+'.'+sid+'.'+ex.id+'.s'+s;
+      h += '<tr><td class="setw">'+s+'</td>'+
+        '<td><input type="number" inputmode="decimal" step="0.5" data-k="'+base+'.kg" value="'+esc(get(base+'.kg',''))+'"></td>'+
+        '<td><input type="number" inputmode="numeric" data-k="'+base+'.reps" value="'+esc(get(base+'.reps',''))+'"></td>'+
+        '<td><input type="number" inputmode="decimal" step="0.5" data-k="'+base+'.rpe" value="'+esc(get(base+'.rpe',''))+'"></td></tr>';
+    }
+    h += '</table></div>';
+  });
+  el.innerHTML = h;
+  var wbtns = el.querySelectorAll('.weekpick button');
+  for (var i=0;i<wbtns.length;i++){
+    wbtns[i].addEventListener('click', function(ev){
+      set('ui.week', +ev.target.getAttribute('data-w'));
+      buildSession('A'); buildSession('B'); buildSession('C');
+      showTab(sid);
+    });
+  }
+  var inputs = el.querySelectorAll('input[data-k]');
+  for (var j=0;j<inputs.length;j++){
+    inputs[j].addEventListener('change', function(ev){
+      set(ev.target.getAttribute('data-k'), ev.target.value);
+    });
+  }
+  if (sid==='A') renderTier();
+}
+function esc(v){ return String(v).replace(/"/g,'&quot;'); }
+function renderTier(){
+  var box = document.getElementById('tierbox');
+  if (!box) return;
+  var d = get('morning.'+todayStr(), null);
+  var h = '<h2>Knee-load tier (today)</h2>';
+  if (!d){
+    h += '<p class="why">No morning check saved for today. Complete it on the Morning tab before squatting.</p>';
+  } else {
+    var msg = {
+      green: 'GREEN \u2014 squat at full prescribed load.',
+      amber: 'AMBER \u2014 reduce squat load by ~12.5% (Week '+curWeek()+': use ~'+(curWeek()===1?'82.5\u201385':'90\u201392.5')+' kg). Keep the 3-3 tempo.',
+      red: 'RED \u2014 replace squats with Spanish squat isometrics, 5\u00d745 s at strong effort. Bench and rows proceed as planned.'
+    };
+    h += '<span class="light '+d.light+'">'+d.light.toUpperCase()+'</span><p class="why" style="margin-top:8px">'+msg[d.light]+'</p>';
+    if (d.light !== 'green'){
+      h += '<label><input type="checkbox" id="ovr" '+(get('ui.override','')? 'checked':'')+'> Override tier (not recommended)</label>'+
+           '<div class="warn" id="ovrwarn">Overriding an amber/red day loads a symptomatic tendon above its current tolerance. Symptom improvement lags tissue capacity \u2014 if you override, expect a flare risk and log it honestly in the export.</div>';
+    }
+  }
+  box.innerHTML = h;
+  var ovr = document.getElementById('ovr');
+  if (ovr){
+    var w = document.getElementById('ovrwarn');
+    w.style.display = ovr.checked ? 'block' : 'none';
+    ovr.addEventListener('change', function(){
+      set('ui.override', ovr.checked ? '1' : '');
+      w.style.display = ovr.checked ? 'block' : 'none';
+    });
+  }
+}
+
+/* ---------- week planner ---------- */
+var DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var DAYOPTS = ['\u2013','Session A','Session B','Session C','Zone 2 ride','Stretch','Isometrics (night shift)','Away','Rest'];
+function buildWeek(){
+  var el = document.getElementById('tab-week');
+  var h = '<div class="card"><h2>Week Planner</h2>'+
+    '<p class="why">Assign sessions around shifts. Night-shift and away days default to isometrics or rest. Aim: A/B/C with a day between, Zone 2 on non-lifting days.</p>';
+  DAYS.forEach(function(d){
+    var k = 'plan.w'+curWeek()+'.'+d;
+    h += '<label>'+d+'</label><select data-k="'+k+'">';
+    DAYOPTS.forEach(function(o){
+      h += '<option'+(get(k,'\u2013')===o?' selected':'')+'>'+o+'</option>';
+    });
+    h += '</select>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+  var sels = el.querySelectorAll('select[data-k]');
+  for (var i=0;i<sels.length;i++){
+    sels[i].addEventListener('change', function(ev){
+      set(ev.target.getAttribute('data-k'), ev.target.value);
+    });
+  }
+}
+
+/* ---------- cardio ---------- */
+function buildCardio(){
+  var el = document.getElementById('tab-cardio');
+  el.innerHTML =
+    '<div class="card"><h2>Cardio Log</h2>'+
+    '<p class="why">Zone 2 cycling is the default: conversational pace, nose-breathing possible. 1\u20132 rides of 40\u201360 min per week. Cycling keeps knee compressive load low relative to running.</p>'+
+    '<label>Date</label><input type="date" id="cd-date">'+
+    '<label>Type</label><select id="cd-type"><option>Zone 2 ride</option><option>Recovery ride</option><option>Walk</option><option>Run (low volume)</option></select>'+
+    '<label>Duration (min)</label><input type="number" id="cd-min" inputmode="numeric">'+
+    '<label>Avg HR (optional)</label><input type="number" id="cd-hr" inputmode="numeric">'+
+    '<label>Notes</label><input type="text" id="cd-notes">'+
+    '<button class="btn" id="cd-save">Add entry</button><span class="saved" id="cd-saved">Saved \u2713</span>'+
+    '<div id="cd-list"></div></div>';
+  document.getElementById('cd-date').value = todayStr();
+  document.getElementById('cd-save').addEventListener('click', function(){
+    var arr = get('cardio', []);
+    arr.push({
+      date: document.getElementById('cd-date').value,
+      type: document.getElementById('cd-type').value,
+      min: document.getElementById('cd-min').value,
+      hr: document.getElementById('cd-hr').value,
+      notes: document.getElementById('cd-notes').value
+    });
+    set('cardio', arr);
+    flash('cd-saved');
+    listCardio();
+  });
+  listCardio();
+}
+function listCardio(){
+  var arr = get('cardio', []);
+  var h = '';
+  if (arr.length){
+    h = '<table><tr><th>Date</th><th>Type</th><th>Min</th><th>HR</th></tr>';
+    arr.slice(-8).reverse().forEach(function(c){
+      h += '<tr><td>'+c.date+'</td><td>'+c.type+'</td><td>'+c.min+'</td><td>'+(c.hr||'\u2013')+'</td></tr>';
+    });
+    h += '</table>';
+  }
+  document.getElementById('cd-list').innerHTML = h;
+}
+
+/* ---------- stretch ---------- */
+function buildStretch(){
+  var el = document.getElementById('tab-stretch');
+  el.innerHTML =
+    '<div class="card"><h2>Stretch / Mobility Log</h2>'+
+    '<p class="why">Short daily doses beat long rare sessions. Priorities: quads, hip flexors, calves, thoracic spine, and shoulder external rotation (gentle, given labrum history).</p>'+
+    '<label>Date</label><input type="date" id="st-date">'+
+    '<label>Duration (min)</label><input type="number" id="st-min" inputmode="numeric">'+
+    '<label>Focus</label><input type="text" id="st-focus" placeholder="e.g. quads + calves">'+
+    '<button class="btn" id="st-save">Add entry</button><span class="saved" id="st-saved">Saved \u2713</span>'+
+    '<div id="st-list"></div></div>';
+  document.getElementById('st-date').value = todayStr();
+  document.getElementById('st-save').addEventListener('click', function(){
+    var arr = get('stretch', []);
+    arr.push({date: document.getElementById('st-date').value,
+      min: document.getElementById('st-min').value,
+      focus: document.getElementById('st-focus').value});
+    set('stretch', arr);
+    flash('st-saved');
+    listStretch();
+  });
+  listStretch();
+}
+function listStretch(){
+  var arr = get('stretch', []);
+  var h = '';
+  if (arr.length){
+    h = '<table><tr><th>Date</th><th>Min</th><th>Focus</th></tr>';
+    arr.slice(-8).reverse().forEach(function(c){
+      h += '<tr><td>'+c.date+'</td><td>'+c.min+'</td><td>'+c.focus+'</td></tr>';
+    });
+    h += '</table>';
+  }
+  document.getElementById('st-list').innerHTML = h;
+}
+
+/* ---------- nutrition ---------- */
+function buildNutrition(){
+  var el = document.getElementById('tab-nutrition');
+  el.innerHTML =
+    '<div class="card"><h2>Nutrition &amp; Supplements</h2>'+
+    '<h3>Targets</h3><ul>'+
+    '<li>Protein: ~2.0\u20132.2 g/kg target weight \u2248 210\u2013230 g/day, spread over 4 feedings</li>'+
+    '<li>Loss rate: 0.3\u20130.5 kg/week (small deficit; calorie target refined once height/body-comp data are in)</li>'+
+    '<li>Hydration: 3+ L/day \u2014 supports both tendon and gout management</li></ul>'+
+    '<h3>Gout guardrails</h3><ul>'+
+    '<li>Limit red meat and organ meats; lean poultry, fish (moderate), eggs, dairy, and plant proteins carry the protein load</li>'+
+    '<li>No beer; avoid fructose-heavy drinks</li>'+
+    '<li>Rapid weight loss can raise uric acid \u2014 another reason the deficit stays small</li></ul>'+
+    '<h3>Blood pressure</h3><ul>'+
+    '<li>Keep sodium moderate; potassium-rich foods (vegetables, dairy, fruit) daily</li>'+
+    '<li>Weight loss itself is the biggest lever you control</li></ul>'+
+    '<h3>Supported by evidence</h3><ul>'+
+    '<li>Creatine monohydrate 5 g/day (evidence on uric acid is limited \u2014 monitor your levels as you already do; stop if a flare pattern appears)</li>'+
+    '<li>Vitamin D if deficient (test first)</li>'+
+    '<li>Whey/casein as convenient protein, not magic</li></ul>'+
+    '</div>';
+}
+
+/* ---------- export ---------- */
+function buildExport(){
+  var el = document.getElementById('tab-export');
+  el.innerHTML =
+    '<div class="card"><h2>Weekly Export</h2>'+
+    '<p class="why">At the end of each week: tap Build report, copy it, paste into chat for review. Then copy the JSON backup somewhere safe (Notes, email). iOS Safari can delete local data after ~7 days of inactivity.</p>'+
+    '<button class="btn" id="ex-build">Build report</button> '+
+    '<button class="btn ghost" id="ex-copy">Copy report</button>'+
+    '<textarea id="ex-out" placeholder="Report appears here"></textarea>'+
+    '<h3>JSON backup</h3>'+
+    '<button class="btn ghost" id="bk-build">Show backup</button> '+
+    '<button class="btn ghost" id="bk-copy">Copy backup</button>'+
+    '<textarea id="bk-out" placeholder="Backup JSON appears here"></textarea>'+
+    '<h3>Restore</h3>'+
+    '<p class="why">Paste a backup below and tap Restore.</p>'+
+    '<textarea id="rs-in" placeholder="Paste backup JSON here"></textarea>'+
+    '<button class="btn ghost" id="rs-go">Restore</button><span class="saved" id="rs-saved">Restored \u2713</span>'+
+    '</div>';
+  document.getElementById('ex-build').addEventListener('click', function(){
+    document.getElementById('ex-out').value = buildReport();
+  });
+  document.getElementById('ex-copy').addEventListener('click', function(){ copyBox('ex-out'); });
+  document.getElementById('bk-build').addEventListener('click', function(){
+    document.getElementById('bk-out').value = JSON.stringify(S);
+  });
+  document.getElementById('bk-copy').addEventListener('click', function(){ copyBox('bk-out'); });
+  document.getElementById('rs-go').addEventListener('click', function(){
+    try {
+      var parsed = JSON.parse(document.getElementById('rs-in').value);
+      S = parsed; save();
+      flash('rs-saved');
+      rebuildAll();
+    } catch(e){ showErr('Restore failed: not valid JSON.'); }
+  });
+}
+function copyBox(id){
+  var t = document.getElementById(id);
+  t.focus(); t.select();
+  try {
+    t.setSelectionRange(0, t.value.length);
+    document.execCommand('copy');
+  } catch(e){}
+}
+function buildReport(){
+  var wk = curWeek();
+  var out = 'TRAINING LEDGER EXPORT \u2014 Block 1, Week ' + wk + '\n\n';
+  out += 'MORNING CHECKS\n';
+  var m = get('morning', {});
+  var keys = []; for (var k in m) keys.push(k);
+  keys.sort();
+  if (!keys.length) out += '(none logged)\n';
+  keys.forEach(function(d){
+    var c = m[d];
+    out += d+': '+c.light.toUpperCase()+' (pain '+c.pain+', stiff '+c.stiff+' min, swell '+c.swell+', joint-line '+c.jline+')\n';
+  });
+  ['A','B','C'].forEach(function(sid){
+    out += '\nSESSION '+sid+'\n';
+    PROG[sid].ex.forEach(function(ex){
+      var line = '';
+      for (var s=1; s<=ex.sets; s++){
+        var base = 'log.w'+wk+'.'+sid+'.'+ex.id+'.s'+s;
+        var kg = get(base+'.kg',''), reps = get(base+'.reps',''), rpe = get(base+'.rpe','');
+        if (kg!=='' || reps!==''){
+          line += '  set '+s+': '+kg+' kg x '+reps+(rpe!==''?(' @RPE '+rpe):'')+'\n';
+        }
+      }
+      if (line) out += ex.n+'\n'+line;
+    });
+  });
+  out += '\nCARDIO\n';
+  var cd = get('cardio', []);
+  if (!cd.length) out += '(none logged)\n';
+  cd.forEach(function(c){ out += c.date+': '+c.type+' '+c.min+' min'+(c.hr?(' @'+c.hr+' bpm'):'')+(c.notes?(' \u2014 '+c.notes):'')+'\n'; });
+  out += '\nSTRETCHING\n';
+  var st = get('stretch', []);
+  if (!st.length) out += '(none logged)\n';
+  st.forEach(function(c){ out += c.date+': '+c.min+' min \u2014 '+c.focus+'\n'; });
+  return out;
+}
+
+/* ---------- boot ---------- */
+function rebuildAll(){
+  buildMorning();
+  buildSession('A'); buildSession('B'); buildSession('C');
+  buildWeek(); buildCardio(); buildStretch(); buildNutrition(); buildExport();
+}
+rebuildAll();
+showTab(get('ui.tab','morning'));
+})();
+</script>
+</body>
+</html>
