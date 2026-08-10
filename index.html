@@ -333,15 +333,83 @@ function renderTier(){
   }
 }
 
-/* ---------- week planner ---------- */
+/* ---------- week planner (availability -> auto-assignment) ---------- */
 var DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-var DAYOPTS = ['\u2013','Session A','Session B','Session C','Zone 2 ride','Stretch','Isometrics (night shift)','Away','Rest'];
+var AVAILOPTS = ['Available (long, 45+ min)','Available (short, ~20 min)','Night shift','Away','Off / unavailable'];
+var DAYOPTS = ['\u2013','Session A','Session B','Session C','Zone 2 ride','Zone 2 (short spin)','Stretch','Isometrics + stretch','Rest'];
+
+/* Pick the 3 lifting days from available "long" day indices, maximising spacing.
+   If days end up adjacent, order sessions so A (squat) and B (deadlift) are never
+   back-to-back: adjacent pairs become B+C; fully consecutive becomes A, C, B. */
+function pickLiftDays(longIdx){
+  if (longIdx.length <= 3) return longIdx.slice();
+  var best = null, bestScore = -1;
+  for (var i=0;i<longIdx.length;i++)
+    for (var j=i+1;j<longIdx.length;j++)
+      for (var k=j+1;k<longIdx.length;k++){
+        var a=longIdx[i], b=longIdx[j], c=longIdx[k];
+        var minGap = Math.min(b-a, c-b);
+        var spread = c-a;
+        var score = minGap*10 + spread;
+        if (score > bestScore){ bestScore = score; best = [a,b,c]; }
+      }
+  return best;
+}
+function orderSessions(days){
+  /* days: sorted indices of chosen lifting days (1-3 of them) */
+  if (days.length < 3){
+    return ['Session A','Session B','Session C'].slice(0, days.length);
+  }
+  var adj01 = (days[1]-days[0])===1, adj12 = (days[2]-days[1])===1;
+  if (adj01 && adj12) return ['Session A','Session C','Session B']; /* keep squat & deadlift days apart */
+  if (adj01) return ['Session B','Session C','Session A']; /* adjacent pair = B+C */
+  if (adj12) return ['Session A','Session B','Session C']; /* B then C adjacent \u2014 acceptable */
+  return ['Session A','Session B','Session C'];
+}
+function generatePlan(){
+  var wk = curWeek();
+  var avail = [];
+  DAYS.forEach(function(d){ avail.push(get('avail.w'+wk+'.'+d, 'Off / unavailable')); });
+  var longIdx = [];
+  for (var i=0;i<7;i++) if (avail[i]===AVAILOPTS[0]) longIdx.push(i);
+  var liftDays = pickLiftDays(longIdx);
+  var order = orderSessions(liftDays);
+  var plan = [];
+  var rides = 0;
+  for (var d=0; d<7; d++){
+    var li = liftDays.indexOf(d);
+    if (li > -1){ plan.push(order[li]); continue; }
+    var a = avail[d];
+    if (a === AVAILOPTS[0]){ /* long day, not lifting */
+      if (rides < 2){ plan.push('Zone 2 ride'); rides++; } else plan.push('Stretch');
+    } else if (a === AVAILOPTS[1]){ /* short */
+      if (rides < 2){ plan.push('Zone 2 (short spin)'); rides++; } else plan.push('Stretch');
+    } else if (a === 'Night shift'){ plan.push('Isometrics + stretch'); }
+    else if (a === 'Away'){ plan.push('Stretch'); }
+    else { plan.push('Rest'); }
+  }
+  for (var p=0;p<7;p++) set('plan.w'+wk+'.'+DAYS[p], plan[p]);
+  return liftDays.length;
+}
 function buildWeek(){
   var el = document.getElementById('tab-week');
-  var h = '<div class="card"><h2>Week Planner</h2>'+
-    '<p class="why">Assign sessions around shifts. Night-shift and away days default to isometrics or rest. Aim: A/B/C with a day between, Zone 2 on non-lifting days.</p>';
+  var wk = curWeek();
+  var h = '<div class="card"><h2>1. Your availability \u2014 Week '+wk+'</h2>'+
+    '<p class="why">Mark each day, then tap Generate. The planner places A/B/C on long days with maximum spacing, avoids squat and deadlift days back-to-back, fills spare days with Zone 2 (max 2 rides), and puts isometrics on night shifts.</p>';
   DAYS.forEach(function(d){
-    var k = 'plan.w'+curWeek()+'.'+d;
+    var k = 'avail.w'+wk+'.'+d;
+    h += '<label>'+d+'</label><select data-k="'+k+'">';
+    AVAILOPTS.forEach(function(o){
+      h += '<option'+(get(k,'Off / unavailable')===o?' selected':'')+'>'+o+'</option>';
+    });
+    h += '</select>';
+  });
+  h += '<button class="btn" id="gen-plan">Generate plan</button>'+
+    '<div class="warn" id="gen-warn"></div></div>';
+  h += '<div class="card"><h2>2. Assigned plan (editable)</h2>'+
+    '<p class="why">Override any day if needed \u2014 your edits are what gets exported.</p>';
+  DAYS.forEach(function(d){
+    var k = 'plan.w'+wk+'.'+d;
     h += '<label>'+d+'</label><select data-k="'+k+'">';
     DAYOPTS.forEach(function(o){
       h += '<option'+(get(k,'\u2013')===o?' selected':'')+'>'+o+'</option>';
@@ -356,6 +424,15 @@ function buildWeek(){
       set(ev.target.getAttribute('data-k'), ev.target.value);
     });
   }
+  document.getElementById('gen-plan').addEventListener('click', function(){
+    var n = generatePlan();
+    var w = document.getElementById('gen-warn');
+    if (n < 3){
+      w.style.display = 'block';
+      w.textContent = 'Only '+n+' long day'+(n===1?'':'s')+' available \u2014 '+n+' lifting session'+(n===1?'':'s')+' placed. Flag this in the weekly export so the programme can be adjusted rather than sessions silently lost.';
+    } else { w.style.display = 'none'; }
+    buildWeek();
+  });
 }
 
 /* ---------- cardio ---------- */
@@ -527,6 +604,12 @@ function buildReport(){
       }
       if (line) out += ex.n+'\n'+line;
     });
+  });
+  out += '\nWEEK PLAN\n';
+  DAYS.forEach(function(d){
+    var av = get('avail.w'+wk+'.'+d, '');
+    var pl = get('plan.w'+wk+'.'+d, '\u2013');
+    out += d+': '+pl+(av?(' ['+av+']'):'')+'\n';
   });
   out += '\nCARDIO\n';
   var cd = get('cardio', []);
