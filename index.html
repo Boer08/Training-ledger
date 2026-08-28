@@ -40,7 +40,6 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink);backgr
 input:focus,select,textarea:focus{outline:2px solid var(--tier);outline-offset:1px}
 :focus-visible{outline:2px solid var(--tier);outline-offset:2px}
 
-/* ---------- structural ---------- */
 .wrap{padding:var(--pad);max-width:640px;margin:0 auto}
 .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
 .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:14px;margin-bottom:12px}
@@ -49,8 +48,8 @@ input:focus,select,textarea:focus{outline:2px solid var(--tier);outline-offset:1
 .muted{color:var(--ink-2);font-size:13.5px}
 .tiny{color:var(--ink-3);font-size:12px}
 .hr{height:1px;background:var(--line-soft);margin:12px 0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-/* ---------- header ---------- */
 header{position:sticky;top:0;z-index:20;background:rgba(21,24,29,.93);
   backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line-soft);
   padding:calc(8px + env(safe-area-inset-top)) var(--pad) 8px}
@@ -61,7 +60,6 @@ header{position:sticky;top:0;z-index:20;background:rgba(21,24,29,.93);
 .tierdot i{width:9px;height:9px;border-radius:50%;background:var(--tier);display:block;
   box-shadow:0 0 0 3px color-mix(in srgb,var(--tier) 22%,transparent)}
 
-/* ---------- signature: staleness strip ---------- */
 .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);
   border:1px solid var(--line-soft);border-radius:14px;overflow:hidden;margin-bottom:12px}
 .sq{background:var(--panel);padding:12px 8px 10px;text-align:center}
@@ -73,7 +71,6 @@ header{position:sticky;top:0;z-index:20;background:rgba(21,24,29,.93);
 .sq .decay b{display:block;height:100%;border-radius:2px}
 .fresh{color:var(--ink)} .ageing{color:var(--amber)} .stale{color:var(--red)}
 
-/* ---------- controls ---------- */
 .btn{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
   padding:12px 14px;font-weight:600;font-size:15px;text-align:center;display:block;width:100%}
 .btn.go{background:var(--tier);border-color:var(--tier);color:#0E1116}
@@ -90,8 +87,8 @@ header{position:sticky;top:0;z-index:20;background:rgba(21,24,29,.93);
 .scale button{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
   padding:11px 0;font-family:var(--mono);font-size:15px;font-weight:600}
 .scale button[aria-pressed="true"]{background:var(--tier);border-color:var(--tier);color:#0E1116}
+.scale.wide button{padding:9px 0;font-size:14px}
 
-/* ---------- alerts ---------- */
 .alert{border-radius:12px;padding:12px 13px;margin-bottom:12px;font-size:14px;line-height:1.45;
   border:1px solid;background:var(--panel)}
 .alert.warn{border-color:color-mix(in srgb,var(--amber) 55%,transparent);
@@ -103,16 +100,27 @@ header{position:sticky;top:0;z-index:20;background:rgba(21,24,29,.93);
 .alert b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
   text-transform:uppercase;margin-bottom:5px}
 
-/* ---------- set logging ---------- */
 .ex{border:1px solid var(--line-soft);border-radius:13px;margin-bottom:11px;overflow:hidden;background:var(--panel)}
 .ex>summary{list-style:none;padding:13px 14px;display:flex;justify-content:space-between;
   align-items:center;gap:10px;cursor:pointer}
 .ex>summary::-webkit-details-marker{display:none}
 .ex .nm{font-weight:600;font-size:15px}
-.ex .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:2px}
+.ex .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.5}
 .ex .chev{color:var(--ink-3);font-family:var(--mono);font-size:12px;flex:none}
 .ex[open] .chev{transform:rotate(90deg)}
 .exbody{padding:0 14px 14px;border-top:1px solid var(--line-soft)}
+.tgt{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;border-radius:5px;padding:2px 6px;margin-top:5px}
+.tgt.hold{background:color-mix(in srgb,var(--amber) 18%,var(--panel));color:var(--amber);
+  border:1px solid color-mix(in srgb,var(--amber) 40%,transparent)}
+.tgt.up{background:color-mix(in srgb,var(--green) 16%,var(--panel));color:var(--green);
+  border:1px solid color-mix(in srgb,var(--green) 38%,transparent)}
+.tgt.ramp{background:var(--panel-2);color:var(--ink-2);border:1px solid var(--line)}
+
+.pairband{border-left:2px solid var(--tier);padding-left:9px;margin-bottom:11px}
+.pairlbl{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tier);margin-bottom:7px}
+
 .sethead,.setrow{display:grid;grid-template-columns:26px 1fr 1fr 1fr;gap:6px;align-items:center}
 .sethead{margin:11px 0 5px}
 .sethead span{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
@@ -120,12 +128,22 @@ header{position:sticky;top:0;z-index:20;background:rgba(21,24,29,.93);
 .setrow .idx{font-family:var(--mono);font-size:12px;color:var(--ink-3);text-align:center}
 .setrow input{padding:10px 6px;text-align:center;font-family:var(--mono);font-size:16px}
 .setrow input.miss{border-color:var(--red)}
-.warmup{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);background:var(--panel-2);
-  border-radius:9px;padding:9px 11px;margin-top:10px;line-height:1.6}
+
+.wu{background:var(--panel-2);border-radius:9px;padding:10px 11px;margin-top:10px}
+.wu .wuh{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:7px}
+.wu .wurow{display:flex;align-items:center;gap:9px;padding:5px 0;font-family:var(--mono);font-size:13px;color:var(--ink-2)}
+.wu .tick{width:22px;height:22px;flex:none;border:1px solid var(--line);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent}
+.wu .wurow[aria-pressed="true"] .tick{background:var(--tier);border-color:var(--tier);color:#0E1116}
+.wu .wurow[aria-pressed="true"]{color:var(--ink-3);text-decoration:line-through}
+.wu .note{font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.5}
+
 .caution{font-size:13px;line-height:1.45;color:var(--amber);margin-top:9px;
   padding-left:10px;border-left:2px solid var(--amber)}
+.specline{font-size:12.5px;line-height:1.5;color:var(--ink-2);margin-top:9px;
+  padding-left:10px;border-left:2px solid var(--line)}
 
-/* ---------- history ---------- */
 .hitem{border-bottom:1px solid var(--line-soft);padding:11px 0}
 .hitem:last-child{border-bottom:0}
 .tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
@@ -134,7 +152,9 @@ pre.out{font-family:var(--mono);font-size:11px;line-height:1.5;white-space:pre-w
   word-break:break-word;background:var(--panel-2);border:1px solid var(--line);
   border-radius:10px;padding:11px;max-height:340px;overflow:auto;color:var(--ink-2)}
 
-/* ---------- nav ---------- */
+.bars{display:flex;align-items:flex-end;gap:3px;height:44px;margin-top:9px}
+.bars i{flex:1;background:var(--line);border-radius:2px 2px 0 0;min-height:2px;display:block}
+
 nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);
   background:rgba(21,24,29,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line-soft);
   padding-bottom:env(safe-area-inset-bottom)}
@@ -143,6 +163,7 @@ nav button{padding:11px 2px 12px;font-family:var(--mono);font-size:9.5px;letter-
 nav button .g{font-size:17px;line-height:1;font-family:var(--sans);font-weight:600}
 nav button[aria-current="true"]{color:var(--tier)}
 .view{display:none} .view.on{display:block}
+
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));
   background:var(--ink);color:#12151A;font-size:14px;font-weight:600;padding:10px 16px;border-radius:20px;
   z-index:50;opacity:0;pointer-events:none;transition:opacity .18s}
@@ -202,17 +223,21 @@ nav button[aria-current="true"]{color:var(--tier)}
           <button data-v="0">None</button><button data-v="1">Yes</button>
         </div>
       </div>
+      <div id="pullFollowUp"></div>
       <button class="btn go" id="saveCheck">Save check</button>
     </div>
   </div>
 
   <div class="card" id="tierCard"></div>
 
+  <div class="card" id="weightCard"></div>
+
   <div class="card">
     <div class="eyebrow">Quick log</div>
     <div class="seg">
       <button class="btn slim" data-jump="cardio">Cardio</button>
       <button class="btn slim" data-jump="iso">Isometrics</button>
+      <button class="btn slim" data-jump="vitals">Resting HR</button>
     </div>
   </div>
 
@@ -221,9 +246,10 @@ nav button[aria-current="true"]{color:var(--tier)}
 <!-- ══════════ LIFT ══════════ -->
 <section class="view" id="v-lift"><div class="wrap">
   <div class="eyebrow">Session</div>
-  <div class="seg" id="pickSession" style="margin-bottom:12px">
+  <div class="seg" id="pickSession" style="margin-bottom:6px">
     <button data-s="A">A</button><button data-s="B">B</button><button data-s="C">C</button>
   </div>
+  <p class="tiny" id="sessionTag" style="margin:0 0 12px"></p>
   <div id="spaceWarn"></div>
   <div id="sessionBody"></div>
 </div></section>
@@ -241,14 +267,18 @@ nav button[aria-current="true"]{color:var(--tier)}
       </div>
     </div>
     <div class="row" style="gap:8px">
-      <div class="field" style="flex:1"><label>Minutes</label><input id="cMin" type="number" inputmode="numeric" placeholder="40"></div>
-      <div class="field" style="flex:1"><label>Avg cadence</label><input id="cCad" type="number" inputmode="numeric" placeholder="90"></div>
+      <div class="field" style="flex:1"><label>Minutes</label><input id="cMin" type="number" inputmode="numeric" placeholder="35"></div>
+      <div class="field" style="flex:1"><label>Avg cadence</label><input id="cCad" type="number" inputmode="numeric" placeholder="100"></div>
+    </div>
+    <div class="row" style="gap:8px">
+      <div class="field" style="flex:1"><label>Avg HR</label><input id="cHR" type="number" inputmode="numeric" placeholder="bpm"></div>
+      <div class="field" style="flex:1"><label>Session RPE 1–10</label><input id="cRPE" type="number" inputmode="numeric" placeholder="4"></div>
     </div>
     <div class="field"><label>Could you talk in full sentences?</label>
       <div class="seg" data-k="talk"><button data-v="yes">Yes — Z2</button><button data-v="no">No — harder</button></div>
     </div>
     <button class="btn go" id="saveCardio">Save cardio</button>
-    <div class="caution">Low resistance, 85–95 rpm. Tendon force tracks pedal force, so spin light rather than grind. No standing climbs while the tendon is symptomatic.</div>
+    <div class="caution">Zone 2 target is 30–45 min. Cadence 95–105 rpm at low resistance — tendon and patellofemoral force track pedal force, so spin light rather than grind. Seated only while the tendon is symptomatic. If the talk test fails, that ride was Zone 3 and it competes with your lifting.</div>
   </div>
 
   <div class="card">
@@ -260,12 +290,48 @@ nav button[aria-current="true"]{color:var(--tier)}
         <button data-v="KB circuit">KB circuit</button><button data-v="Core / anti-flexion">Core</button>
       </div>
     </div>
+    <div class="field">
+      <label>Position / knee angle</label>
+      <div class="seg" data-k="iang">
+        <button data-v="60°">~60°</button><button data-v="90°">~90°</button><button data-v="Other">Other</button>
+      </div>
+    </div>
     <div class="row" style="gap:8px">
       <div class="field" style="flex:1"><label>Sets</label><input id="iSets" type="number" inputmode="numeric" placeholder="5"></div>
       <div class="field" style="flex:1"><label>Hold (sec)</label><input id="iHold" type="number" inputmode="numeric" placeholder="45"></div>
     </div>
+    <div class="field">
+      <label>Pain during hold (0–10)</label>
+      <div class="scale wide" data-k="ipain"></div>
+    </div>
     <button class="btn go" id="saveIso">Save isometrics</button>
-    <div class="caution">Isometrics: 5 × 45 s at roughly 70% effort, 2 min rest. Held long enough to be a real stimulus, and often analgesic for 30–45 min afterwards — useful before a squat session. Evidence for the pain relief is mixed and short-lived; treat it as a tool, not a cure.</div>
+    <div class="caution">5 × 45 s at roughly 70% effort, 2 min rest. Long enough to be a real stimulus, and often analgesic for 30–45 min afterwards — useful immediately before a squat session. The pain-relief evidence is mixed and short-lived; treat it as a tool, not a cure. Next-morning response is read automatically from tomorrow's check.</div>
+  </div>
+
+  <div class="card" id="vitalsCard">
+    <div class="eyebrow">Resting HR &amp; HRV</div>
+    <div class="row" style="gap:8px">
+      <div class="field" style="flex:1"><label>Resting HR</label><input id="vHR" type="number" inputmode="numeric" placeholder="bpm"></div>
+      <div class="field" style="flex:1"><label>HRV (ms)</label><input id="vHRV" type="number" inputmode="numeric" placeholder="optional"></div>
+    </div>
+    <div class="field">
+      <label>Garmin HRV status</label>
+      <div class="seg" data-k="vstat">
+        <button data-v="Balanced">Balanced</button><button data-v="Unbalanced">Unbalanced</button><button data-v="Low">Low</button>
+      </div>
+    </div>
+    <button class="btn go" id="saveVitals">Save</button>
+    <div class="specline">Weekly is enough. Single readings are noisy; the trend over a month is the signal — for training load and for blood pressure.</div>
+  </div>
+
+  <div class="card" id="bwCard">
+    <div class="eyebrow">Body weight</div>
+    <div class="row" style="gap:8px">
+      <div class="field" style="flex:1"><label>Weight (kg)</label><input id="wKg" type="number" inputmode="decimal" step="0.1" placeholder="112.0"></div>
+      <div class="field" style="flex:1"><label>Est. body fat %</label><input id="wBf" type="number" inputmode="decimal" step="0.1" placeholder="optional"></div>
+    </div>
+    <button class="btn go" id="saveWeight">Save weight</button>
+    <div class="specline">Same conditions each time — morning, after the toilet, before food. Target is roughly 105 kg. Aim for about 0.4–0.5 kg/week; faster than that and you start paying for it in lean mass and training quality.</div>
   </div>
 
 </div></section>
@@ -273,8 +339,12 @@ nav button[aria-current="true"]{color:var(--tier)}
 <!-- ══════════ HISTORY ══════════ -->
 <section class="view" id="v-hist"><div class="wrap">
   <div class="card">
-    <div class="eyebrow">Last 28 days</div>
+    <div class="eyebrow" id="freqEyebrow">Frequency</div>
     <div id="freqSummary"></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Body weight trend</div>
+    <div id="wTrend"></div>
   </div>
   <div class="card">
     <div class="eyebrow">Everything logged</div>
@@ -285,12 +355,19 @@ nav button[aria-current="true"]{color:var(--tier)}
 <!-- ══════════ DATA ══════════ -->
 <section class="view" id="v-data"><div class="wrap">
   <div id="backupNag"></div>
+
+  <div class="card">
+    <div class="eyebrow">Block</div>
+    <div id="blockBox"></div>
+  </div>
+
   <div class="card">
     <div class="eyebrow">Export for coaching</div>
     <button class="btn" id="btnText" style="margin-bottom:8px">Build text export</button>
     <button class="btn" id="btnCopy" style="margin-bottom:10px">Copy to clipboard</button>
     <pre class="out" id="outBox">Tap “Build text export”.</pre>
   </div>
+
   <div class="card">
     <div class="eyebrow">Backup &amp; restore</div>
     <p class="muted" style="margin:0 0 10px">Safari can clear local storage after about a week of not opening the app. Copy the JSON somewhere safe weekly.</p>
@@ -298,6 +375,12 @@ nav button[aria-current="true"]{color:var(--tier)}
     <div class="field"><label>Paste a backup to restore</label><textarea id="impBox" rows="4" placeholder="Paste JSON here"></textarea></div>
     <button class="btn" id="btnImport">Restore from JSON</button>
   </div>
+
+  <div class="card">
+    <div class="eyebrow">Progression rules</div>
+    <div id="rules"></div>
+  </div>
+
   <div class="card">
     <div class="eyebrow">Exercise notes</div>
     <div id="specs"></div>
@@ -317,17 +400,39 @@ nav button[aria-current="true"]{color:var(--tier)}
 <script>
 "use strict";
 
-/* ═══════════ storage (degrades to memory if blocked) ═══════════ */
+/* ═══════════ storage ═══════════
+   KEY is deliberately unchanged from v2. Bumping it would orphan every
+   session already sitting in localStorage. Schema changes are handled by
+   migrate() instead. */
 var KEY="ledger_v2", memOnly=false, mem=null;
 function canStore(){try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return true}catch(e){return false}}
 memOnly=!canStore();
 if(memOnly) document.getElementById("storeWarn").style.display="block";
 
-var BLANK={version:2,checks:[],sessions:[],cardio:[],iso:[],lastExport:null};
+var BLANK={version:3,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
+           blockStart:null,lastExport:null};
+
+function migrate(o){
+  o=Object.assign(JSON.parse(JSON.stringify(BLANK)),o||{});
+  ["checks","sessions","cardio","iso","weight","vitals"].forEach(function(k){
+    if(!Array.isArray(o[k])) o[k]=[];
+  });
+  /* v2 sessions have no flags — infer them from the session letter so the
+     staleness strip and frequency counts still work on old data. */
+  o.sessions.forEach(function(s){
+    if(!s.flags){
+      s.flags = s.type==="A" ? {tendon:true,axial:true,hinge:false}
+              : s.type==="B" ? {tendon:false,axial:true,hinge:true}
+              : {tendon:false,axial:true,hinge:true};
+    }
+  });
+  o.version=3;
+  return o;
+}
 function load(){
-  if(memOnly) return mem||(mem=JSON.parse(JSON.stringify(BLANK)));
-  try{var r=localStorage.getItem(KEY);return r?Object.assign({},BLANK,JSON.parse(r)):JSON.parse(JSON.stringify(BLANK))}
-  catch(e){return JSON.parse(JSON.stringify(BLANK))}
+  if(memOnly) return mem||(mem=migrate(null));
+  try{var r=localStorage.getItem(KEY);return migrate(r?JSON.parse(r):null)}
+  catch(e){return migrate(null)}
 }
 function save(){ if(memOnly){mem=DB;return} try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast("Could not save")} }
 var DB=load();
@@ -336,41 +441,79 @@ var DB=load();
 function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function daysBetween(a,b){return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000)}
 function daysAgo(iso){return iso?daysBetween(iso,today()):null}
+function shift(iso,n){var d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+n);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function pretty(iso){var d=new Date(iso+"T00:00:00");
   return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]+" "+d.getDate()+" "+
     ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]}
 function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");
   setTimeout(function(){t.classList.remove("show")},1700)}
 
+/* first date across every record type — the honest denominator */
+function firstDate(){
+  var d=null;
+  [DB.sessions,DB.cardio,DB.iso,DB.checks,DB.weight,DB.vitals].forEach(function(a){
+    a.forEach(function(x){if(!d||x.date<d)d=x.date});
+  });
+  return d;
+}
+function daysOfData(){var f=firstDate();return f?Math.max(1,daysBetween(f,today())+1):0}
+
 /* ═══════════ programme ═══════════
-   RIR is the single effort field everywhere. RPE is shown as 10 − RIR so the
-   two can never be entered into the same box again.                            */
+   RIR is the single effort field. RPE is never entered — it is 10 − RIR.
+   `target` is the prescribed load for this week. `hold` means do not add
+   load this week even if it feels easy; `ramp` means the load is
+   deliberately below capacity while tissue tolerance catches up. */
 var PROG={
-  A:{name:"Session A",ex:[
-    {n:"Box Squat",d:"high bar · parallel box · 3-3 tempo",sets:4,reps:"6",rir:"3–4",rest:"3 min",axial:true,knee:true,
-     c:"Parallel box is the permanent default, not a stage you graduate from. With meniscal tissue removed on both sides, deep loaded flexion concentrates contact pressure over less cartilage."},
-    {n:"Bench Press",d:"controlled grip width",sets:4,reps:"5",rir:"3–4",rest:"3 min",
-     c:"Keep the grip inside the widest setting and the elbows tucked to roughly 45°. Wide grip plus low elbows is the position that stresses a repaired labrum."},
-    {n:"Barbell Row",d:"chest-supported if low back is fatigued",sets:3,reps:"8",rir:"3",rest:"90 s"}
-  ]},
-  B:{name:"Session B",ex:[
-    {n:"Deadlift",d:"conventional · straight sets",sets:3,reps:"5",rir:"3–4",rest:"3–4 min",axial:true,
-     c:"Never supersetted. Full rest, and stop the set the moment bar speed drops rather than grinding a rep out."},
-    {n:"Overhead Press",d:"standing barbell",sets:4,reps:"6",rir:"3",rest:"2 min",
-     c:"Bar path in front of the face, finishing overhead. Nothing behind the neck."},
-    {n:"Chin-ups",d:"neutral grip",sets:3,reps:"to RIR 2",rir:"2",rest:"2 min",
-     c:"Neutral grip here deliberately — less anterior shoulder stress than supinated."},
-    {n:"Wall Sit",d:"isometric",sets:3,reps:"45 s",rir:"—",rest:"90 s",knee:true}
-  ]},
-  C:{name:"Session C",ex:[
-    {n:"Incline DB Press",d:"per hand",sets:4,reps:"8",rir:"3",rest:"90 s"},
-    {n:"Pull-ups",d:"pronated",sets:3,reps:"to RIR 1",rir:"1",rest:"90 s",
-     c:"Hold bodyweight until you hit 10 / 10 / 8 before adding any external load."},
-    {n:"Romanian Deadlift",d:"straight sets",sets:3,reps:"8",rir:"2–3",rest:"2–3 min",axial:true},
-    {n:"Barbell Row",d:"",sets:3,reps:"8",rir:"3",rest:"90 s"},
-    {n:"Hammer Curls",d:"optional — cut if short on time",sets:2,reps:"10",rir:"3",rest:"60 s"}
-  ]}
+A:{name:"Session A",tag:"Squat · Bench · Row · ~38 min",ex:[
+  {n:"Box Squat",d:"high bar · parallel box · 3-3 tempo",sets:4,reps:"6",rir:"3",rest:"3 min",
+   target:130,axial:true,knee:true,tendon:true,wu:true,
+   c:"Parallel box is the permanent default, not a stage you graduate from. With meniscal tissue removed on both sides, deep loaded flexion concentrates contact pressure over less cartilage.",
+   spec:"Tendon exposure 1 of 3. The 3 s down / 3 s up tempo is the active ingredient — if the eccentric shortens, the load is too heavy regardless of what the RIR says. Stop the set, not the tempo."},
+  {n:"Bench Press",d:"straight sets — no intra-session jumps",sets:4,reps:"5",rir:"3",rest:"2.5 min",
+   target:115,wu:true,
+   c:"Keep the grip inside the widest setting and the elbows tucked to roughly 45°. Wide grip plus low elbows is the position that stresses a repaired labrum.",
+   spec:"All four sets at the same load. Adding weight mid-session makes the week unreadable — I cannot tell a capacity gain from a good day."},
+  {n:"Barbell Row",d:"chest-supported if low back is fatigued",sets:3,reps:"8",rir:"4",rest:"90 s",
+   target:75}
+]},
+B:{name:"Session B",tag:"Deadlift · Leg press ⟋ OHP · Chin · ~34 min",ex:[
+  {n:"Deadlift",d:"conventional · straight sets",sets:3,reps:"5",rir:"3",rest:"3–4 min",
+   target:150,axial:true,hinge:true,wu:true,
+   c:"Never supersetted. Full rest, and stop the set the moment bar speed drops rather than grinding a rep out.",
+   spec:"Not a tendon exposure — knee extensor moment is low and brief. A heavy pull day never substitutes for a squat or leg press."},
+  {n:"Leg Press",d:"3-3 tempo · depth capped at box-squat depth",sets:3,reps:"8",rir:"5",rest:"90 s (pair)",
+   knee:true,tendon:true,pair:"B1",ramp:true,
+   c:"First exposures. Deliberately light for two weeks regardless of how easy it feels — this is a new weekly dose of knee-extensor load, and the failure mode is being impatient in week one and backing off in week three.",
+   spec:"Tendon exposure 2 of 3. A machine here is deliberate: it loads the knee extensors heavily with no axial spinal load on a day that already has a deadlift, and it allows small precise load steps, which is what tendon protocols need."},
+  {n:"Overhead Press",d:"standing barbell",sets:4,reps:"6",rir:"3",rest:"90 s (pair)",
+   target:70,pair:"B1",hold:true,wu:true,
+   c:"Bar path in front of the face, finishing overhead. Nothing behind the neck.",
+   spec:"Load holds this week. 4×6 near RIR 2 is the heaviest shoulder exposure in your week on a repaired labrum. If set 3 comes in below RIR 3, stop there — skip set 4."},
+  {n:"Weighted Chin-up",d:"neutral grip · added kg",sets:3,reps:"8",rir:"3",rest:"2 min",
+   target:5,bwPlus:true,
+   c:"Neutral grip here deliberately — less anterior shoulder stress than supinated.",
+   spec:"You cleared 10/10/12 at bodyweight, so load goes on. Log the added weight, not total."}
+]},
+C:{name:"Session C",tag:"RDL · Leg press ⟋ Pull · Press ⟋ Row · ~32 min",ex:[
+  {n:"Romanian Deadlift",d:"from rack at hip height · no touch-down",sets:3,reps:"8",rir:"3",rest:"2 min",
+   target:90,axial:true,hinge:true,wu:true,
+   c:"Capped at RIR 3, not 2. It is an accessory — taken close to failure at long muscle length it produces delayed soreness that lands on Session B's deadlift.",
+   spec:"Set up out of the rack, not off the floor: that setup pull is unlogged fatigue on the same pattern. Knee angle fixed near 15–20°, all travel from the hip. Stop where the pelvis stops rotating — lower than that is lumbar flexion, not hamstring stimulus. No touch-down between reps or it becomes a deficit deadlift."},
+  {n:"Leg Press",d:"3-3 tempo · or hack squat",sets:3,reps:"8",rir:"5",rest:"90 s (pair)",
+   knee:true,tendon:true,pair:"C1",ramp:true,
+   spec:"Tendon exposure 3 of 3. Same rule as Session B — hold at RIR 5 for two weeks and let the morning check decide when to move."},
+  {n:"Pull-ups",d:"pronated · bodyweight",sets:3,reps:"to RIR 1",rir:"1",rest:"90 s (pair)",
+   pair:"C1",
+   spec:"Kept pronated here so the week has one neutral-grip and one pronated vertical pull. Bodyweight until 10 / 10 / 8 before adding load — the neutral-grip chin-up is the loaded one."},
+  {n:"Incline DB Press",d:"per hand",sets:3,reps:"8",rir:"3",rest:"90 s (pair)",
+   target:44,pair:"C2"},
+  {n:"Chest-supported DB Row",d:"per hand · swapped from barbell row",sets:3,reps:"10",rir:"3",rest:"90 s (pair)",
+   pair:"C2",
+   spec:"Replaces the barbell row in this session only — chest support removes axial spinal load on a day that already contains RDLs. Barbell row stays in Session A."}
+]}
 };
+var PAIRLBL={B1:"Superset — 90 s between pairs",C1:"Superset — 90 s between pairs",C2:"Superset — 75–90 s between pairs"};
 
 /* ═══════════ traffic light ═══════════ */
 function tierOf(c){
@@ -380,13 +523,13 @@ function tierOf(c){
   return "green";
 }
 var TIERTEXT={
-  green:{h:"Full prescription",b:"Squat at the programmed load, all sets, tempo as written."},
-  amber:{h:"Squat at −10%",b:"Drop the top load about 10% or cut to three sets. Keep the tempo — slow loading is the part that helps the tendon. Reassess tomorrow morning."},
-  red:{h:"No loaded squatting",b:"Isometrics only today: Spanish squat or wall sit, 5 × 45 s. Upper body is fine. If swelling or joint-line pain persists past 48 hours, that is a joint signal rather than a tendon one — get it looked at."}
+ green:{h:"Full prescription",b:"All three tendon exposures at the programmed load, tempo as written. Deadlift and RDL as prescribed."},
+ amber:{h:"Knee work at −10%",b:"Drop box squat and leg press about 10%, or cut to three sets. Keep the tempo — slow loading is the part that helps the tendon. Deadlift −10% as well, since joint-line signals mean the flexed-knee setup position is worth respecting. Reassess tomorrow morning."},
+ red:{h:"No loaded knee extension",b:"Box squat and leg press out; substitute Spanish squat or wall sit 5 × 45 s. Deadlift is permitted at −15% because knee extensor demand is low and brief — but stop immediately on joint-line pain. Upper body is unaffected. If swelling or joint-line pain persists past 48 hours, that is a joint signal rather than a tendon one — get it looked at."}
 };
 function latestCheck(){return DB.checks.length?DB.checks[DB.checks.length-1]:null}
-function todaysCheck(){var c=latestCheck();return c&&c.date===today()?c:null}
-
+function checkOn(d){for(var i=0;i<DB.checks.length;i++) if(DB.checks[i].date===d) return DB.checks[i]; return null}
+function todaysCheck(){return checkOn(today())}
 function applyTier(){
   var c=todaysCheck(), t=c?tierOf(c):null;
   document.documentElement.style.setProperty("--tier",t?"var(--"+t+")":"#6B7686");
@@ -399,16 +542,20 @@ function lastDateFor(pred){
   DB.sessions.forEach(function(s){if(pred(s)&&(!d||s.date>d))d=s.date});
   return d;
 }
-function lastSquat(){return lastDateFor(function(s){return s.type==="A"})}
-function lastHinge(){return lastDateFor(function(s){return s.type==="B"||s.type==="C"})}
-function lastPress(){return lastDateFor(function(s){return true})}
+function lastTendon(){
+  var d=lastDateFor(function(s){return s.flags&&s.flags.tendon});
+  DB.iso.forEach(function(x){if(!d||x.date>d)d=x.date});
+  return d;
+}
+function lastHinge(){return lastDateFor(function(s){return s.flags&&s.flags.hinge})}
+function lastLift(){return lastDateFor(function(){return true})}
 function lastCardio(){var d=null;DB.cardio.forEach(function(x){if(!d||x.date>d)d=x.date});return d}
 
 function renderStrip(){
   var items=[
-    {l:"Squat",d:lastSquat(),warn:6,bad:10},
+    {l:"Tendon",d:lastTendon(),warn:4,bad:7},
     {l:"Hinge",d:lastHinge(),warn:6,bad:10},
-    {l:"Lift",d:lastPress(),warn:5,bad:9},
+    {l:"Lift",d:lastLift(),warn:5,bad:9},
     {l:"Cardio",d:lastCardio(),warn:5,bad:9}
   ];
   document.getElementById("strip").innerHTML=items.map(function(i){
@@ -426,17 +573,22 @@ function renderStrip(){
   }).join("");
 }
 
-/* ═══════════ today view ═══════════ */
+/* ═══════════ today ═══════════ */
 var draftCheck={stairs:null,decline:null,jointLine:null,stiff:null,swell:null};
+var draftBack=null;
 
 function buildScales(){
   document.querySelectorAll(".scale").forEach(function(el){
     if(el.childElementCount) return;
-    el.innerHTML=[0,1,2,3,4,5].map(function(v){return '<button data-v="'+v+'">'+v+'</button>'}).join("");
+    var max=el.classList.contains("wide")?10:5;
+    var out=[];
+    for(var v=0;v<=max;v++) out.push('<button data-v="'+v+'">'+v+'</button>');
+    el.innerHTML=out.join("");
   });
 }
-function wirePickers(){
-  document.querySelectorAll(".scale,.seg[data-k]").forEach(function(el){
+function wirePickers(root){
+  (root||document).querySelectorAll(".scale,.seg[data-k]").forEach(function(el){
+    if(el.dataset.wired) return; el.dataset.wired="1";
     el.addEventListener("click",function(e){
       var b=e.target.closest("button[data-v]"); if(!b) return;
       el.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});
@@ -444,35 +596,89 @@ function wirePickers(){
       el.dataset.val=b.dataset.v;
       var k=el.dataset.k;
       if(k in draftCheck) draftCheck[k]=parseInt(b.dataset.v,10);
+      if(k==="backstiff") draftBack=parseInt(b.dataset.v,10);
     });
   });
 }
 
+/* the day after an axial session, ask the one extra question that matters */
+function renderFollowUp(){
+  var y=shift(today(),-1), had=false;
+  DB.sessions.forEach(function(s){if(s.date===y&&s.flags&&s.flags.axial) had=true});
+  var box=document.getElementById("pullFollowUp");
+  if(!had){box.innerHTML="";return}
+  box.innerHTML='<div class="field"><label>Lower-back stiffness after yesterday\'s pull</label>'+
+    '<div class="seg" data-k="backstiff"><button data-v="0">None</button><button data-v="10">&lt;10 min</button>'+
+    '<button data-v="30">10–30</button><button data-v="60">30+</button></div>'+
+    '<p class="tiny" style="margin:6px 0 0">Optional. This is the deadlift\'s own next-morning signal — the knee questions above do not capture it.</p></div>';
+  wirePickers(box);
+}
+
 function renderTierCard(){
   var c=todaysCheck(), box=document.getElementById("tierCard");
-  if(!c){ box.innerHTML='<div class="eyebrow">Load tier</div><p class="muted" style="margin:0">Log this morning\'s check to set the day\'s squat tier.</p>'; return }
+  if(!c){ box.innerHTML='<div class="eyebrow">Load tier</div><p class="muted" style="margin:0">Log this morning\'s check to set the day\'s tier.</p>'; return }
   var t=tierOf(c), x=TIERTEXT[t];
   box.innerHTML='<div class="eyebrow">Load tier — '+t+'</div>'+
     '<h2 style="font-size:16px;margin-bottom:6px">'+x.h+'</h2>'+
     '<p class="muted" style="margin:0">'+x.b+'</p>';
 }
 
+function lastWeight(){return DB.weight.length?DB.weight[DB.weight.length-1]:null}
+function avgWeight(fromIso,toIso){
+  var a=DB.weight.filter(function(x){return x.date>=fromIso&&x.date<=toIso});
+  if(!a.length) return null;
+  return a.reduce(function(s,x){return s+x.kg},0)/a.length;
+}
+function renderWeightCard(){
+  var box=document.getElementById("weightCard"), w=lastWeight();
+  if(!w){
+    box.innerHTML='<div class="eyebrow">Body weight</div>'+
+      '<p class="muted" style="margin:0 0 10px">Nothing logged yet. Target is roughly 105 kg from 112.</p>'+
+      '<button class="btn slim" data-jump="bw">Log weight</button>';
+    return;
+  }
+  var d=daysAgo(w.date);
+  var recent=avgWeight(shift(today(),-6),today());
+  var prior=avgWeight(shift(today(),-13),shift(today(),-7));
+  var rate=(recent!==null&&prior!==null)?(recent-prior):null;
+  var toGo=w.kg-105;
+  box.innerHTML='<div class="eyebrow">Body weight</div>'+
+    '<div class="spread"><span class="mono" style="font-size:26px;font-weight:600">'+w.kg.toFixed(1)+
+    ' <span style="font-size:13px;color:var(--ink-3)">kg</span></span>'+
+    '<span class="tiny">'+(d===0?"today":d+" d ago")+'</span></div>'+
+    '<div class="hr"></div>'+
+    '<div class="spread"><span class="muted">To target</span><span class="mono">'+(toGo>0?toGo.toFixed(1)+" kg":"at target")+'</span></div>'+
+    (rate!==null?'<div class="hr"></div><div class="spread"><span class="muted">7-day trend</span><span class="mono">'+
+      (rate>0?"+":"")+rate.toFixed(2)+' kg/wk</span></div>'+
+      (rate<-0.7?'<div class="caution">Faster than 0.6–0.7 kg/wk at your size starts costing lean mass and top-set quality. Add food back.</div>':"")
+     :'')+
+    (d>=8?'<div class="caution">Last weight is '+d+' days old. Weekly minimum, same conditions.</div>':"")+
+    '<button class="btn slim" data-jump="bw" style="margin-top:11px">Log weight</button>';
+}
+
 function renderTodayAlerts(){
   var out="", c=todaysCheck();
-  var lastAxial=lastDateFor(function(s){return s.type==="A"||s.type==="B"||s.type==="C"});
-  var gap=daysAgo(lastAxial);
-  if(gap!==null&&gap===0) out+='<div class="alert warn"><b>Already lifted today</b>A second heavy session today is not the missing ingredient. Ride, walk, or rest.</div>';
-  else if(gap!==null&&gap<1) out+="";
+  var gap=daysAgo(lastLift());
+  if(gap===0) out+='<div class="alert warn"><b>Already lifted today</b>A second heavy session today is not the missing ingredient. Ride, walk, or rest.</div>';
   if(gap!==null&&gap>=14) out+='<div class="alert stop"><b>'+gap+' days since a barbell session</b>At this spacing the lifts are being maintained at best. Frequency is the variable to fix before load.</div>';
+
+  var td=daysAgo(lastTendon());
+  if(td!==null&&td>=6) out+='<div class="alert warn"><b>'+td+' days since knee-extensor loading</b>Three exposures a week is the dose with support behind it. If the gym is out, isometrics still count as a holding pattern — they are not a substitute for heavy slow work.</div>';
+
   var cd=daysAgo(lastCardio());
   if(cd===null) out+='<div class="alert warn"><b>No cardio logged</b>With hypertension in the picture this is the highest-value thing you are not doing. Two Zone 2 rides a week.</div>';
   else if(cd>=10) out+='<div class="alert warn"><b>'+cd+' days since cardio</b>Aerobic work is the blood-pressure lever. Get a ride in.</div>';
-  if(c&&tierOf(c)==="red") out+='<div class="alert stop"><b>Red day</b>No loaded knee flexion. Isometrics and upper body only.</div>';
+
+  var z3=DB.cardio.filter(function(x){return x.date>=shift(today(),-7)&&x.talk==="no"}).length;
+  if(z3>=2) out+='<div class="alert warn"><b>'+z3+' rides failed the talk test this week</b>Those were Zone 3, not Zone 2. That intensity competes with lifting recovery without buying much extra aerobic benefit. Drop the power, keep the cadence.</div>';
+
+  if(c&&tierOf(c)==="red") out+='<div class="alert stop"><b>Red day</b>No loaded knee extension. Isometrics, deadlift at −15%, and upper body only.</div>';
   document.getElementById("todayAlerts").innerHTML=out;
 }
 
 function renderToday(){
-  buildScales(); renderStrip(); renderTierCard(); renderTodayAlerts(); applyTier();
+  buildScales(); wirePickers(); renderStrip(); renderTierCard(); renderWeightCard();
+  renderFollowUp(); renderTodayAlerts(); applyTier();
   var c=todaysCheck();
   document.getElementById("checkDate").textContent=c?"logged "+pretty(c.date):pretty(today());
 }
@@ -481,61 +687,112 @@ document.getElementById("saveCheck").addEventListener("click",function(){
   var miss=Object.keys(draftCheck).filter(function(k){return draftCheck[k]===null});
   if(miss.length){toast("Answer all five");return}
   var rec=Object.assign({date:today()},draftCheck);
+  if(draftBack!==null) rec.backStiff=draftBack;
   DB.checks=DB.checks.filter(function(x){return x.date!==today()});
   DB.checks.push(rec); DB.checks.sort(function(a,b){return a.date<b.date?-1:1});
-  save(); renderToday(); toast("Check saved — tier "+tierOf(rec));
+  save(); renderAll(); toast("Check saved — tier "+tierOf(rec));
 });
 
-/* ═══════════ lift view ═══════════ */
+/* ═══════════ lift ═══════════ */
 var curSession="A";
-function warmups(top){
+
+function warmupRows(top,ex){
   if(!top||isNaN(top)) return null;
   var r=function(x){return Math.round(x/5)*5};
-  var s=[r(top*.40)+"×5",r(top*.60)+"×3",r(top*.80)+"×2"];
-  if(top>=120) s.push(r(top*.92)+"×1");
-  return s.join("  ·  ");
+  var s=[[r(top*.40),5],[r(top*.60),3],[r(top*.80),2]];
+  if(top>=120) s.push([r(top*.92),1]);
+  return s;
 }
+function tierAdjust(target,ex){
+  var c=todaysCheck(), t=c?tierOf(c):null;
+  if(!target||!t||t==="green") return {load:target,note:null};
+  if(t==="amber"){
+    if(ex.tendon||ex.knee) return {load:Math.round(target*0.9/2.5)*2.5,note:"amber −10%"};
+    if(ex.hinge) return {load:Math.round(target*0.9/2.5)*2.5,note:"amber −10%"};
+    return {load:target,note:null};
+  }
+  if(t==="red"){
+    if(ex.hinge&&!ex.knee) return {load:Math.round(target*0.85/2.5)*2.5,note:"red −15%"};
+    return {load:target,note:null};
+  }
+  return {load:target,note:null};
+}
+
 function renderSession(){
   document.querySelectorAll("#pickSession button").forEach(function(b){
     b.setAttribute("aria-pressed",String(b.dataset.s===curSession))});
+  var p=PROG[curSession];
+  document.getElementById("sessionTag").textContent=p.tag;
 
-  // spacing warning
-  var lastAx=null;
-  DB.sessions.forEach(function(s){if(["A","B","C"].indexOf(s.type)>=0&&(!lastAx||s.date>lastAx))lastAx=s.date});
-  var g=daysAgo(lastAx), sw="";
+  var lastAx=lastLift(), g=daysAgo(lastAx), sw="";
   if(g!==null&&g<2) sw='<div class="alert warn"><b>Only '+(g===0?"today":g+" day")+' since your last barbell session</b>Heavy axial work wants 48 hours between exposures, and the tendon wants it more than the muscle does. Consider moving this to tomorrow.</div>';
   document.getElementById("spaceWarn").innerHTML=sw;
 
-  var p=PROG[curSession];
   var c=todaysCheck(), t=c?tierOf(c):null;
-  var html="";
+  var html="", openPair=null;
+
   p.ex.forEach(function(e,i){
-    if(t==="red"&&e.knee){
+    /* pair banding */
+    if(e.pair!==openPair){
+      if(openPair) html+='</div>';
+      openPair=e.pair||null;
+      if(openPair) html+='<div class="pairband"><div class="pairlbl">'+(PAIRLBL[openPair]||"Superset")+'</div>';
+    }
+
+    if(t==="red"&&e.tendon){
       html+='<div class="ex"><div style="padding:13px 14px"><div class="nm">'+e.n+'</div>'+
-        '<div class="caution" style="margin-top:7px">Skipped — red tier. Substitute Spanish squat 5 × 45 s.</div></div></div>';
+        '<div class="caution" style="margin-top:7px">Skipped — red tier. Substitute Spanish squat or wall sit, 5 × 45 s at ~70% effort.</div></div></div>';
       return;
     }
+
+    var adj=tierAdjust(e.target,e);
+    var tgtHTML="";
+    if(e.target){
+      var lbl = e.hold ? "hold "+adj.load+" kg"
+              : e.ramp ? "ramp "+adj.load+" kg"
+              : "target "+adj.load+(e.bwPlus?" kg added":" kg");
+      var cls = e.hold?"hold":(e.ramp?"ramp":"up");
+      tgtHTML='<span class="tgt '+cls+'">'+lbl+(adj.note?" · "+adj.note:"")+'</span>';
+    } else if(e.ramp){
+      tgtHTML='<span class="tgt ramp">ramp — start light</span>';
+    }
+
     var rows="";
     for(var s=1;s<=e.sets;s++){
       rows+='<div class="setrow"><div class="idx">'+s+'</div>'+
         '<input data-f="load" data-e="'+i+'" data-s="'+s+'" inputmode="decimal" placeholder="kg">'+
         '<input data-f="reps" data-e="'+i+'" data-s="'+s+'" inputmode="numeric" placeholder="reps">'+
-        '<input data-f="rir"  data-e="'+i+'" data-s="'+s+'" inputmode="numeric" placeholder="RIR"></div>';
+        '<input data-f="rir" data-e="'+i+'" data-s="'+s+'" inputmode="numeric" placeholder="RIR"></div>';
     }
+
     html+='<details class="ex"'+(i===0?" open":"")+'>'+
       '<summary><div><div class="nm">'+e.n+'</div><div class="sub">'+e.sets+"×"+e.reps+
-        "  ·  RIR "+e.rir+"  ·  "+e.rest+(e.d?"  ·  "+e.d:"")+'</div></div><div class="chev">›</div></summary>'+
+      " · RIR "+e.rir+" · "+e.rest+(e.d?" · "+e.d:"")+'<br>'+tgtHTML+'</div></div><div class="chev">›</div></summary>'+
       '<div class="exbody">'+
         '<div class="sethead"><span></span><span>Load</span><span>Reps</span><span>RIR</span></div>'+
         rows+
         '<button class="btn slim" data-copy="'+i+'" style="margin-top:8px">Copy set 1 down</button>'+
-        (e.axial||e.knee?'<div class="warmup" data-wu="'+i+'">Warm-ups appear once set 1 load is entered.</div>':"")+
+        (e.wu?'<div class="wu" data-wu="'+i+'">'+wuHTML(adj.load,i)+'</div>':"")+
         (e.c?'<div class="caution">'+e.c+'</div>':"")+
+        (e.spec?'<div class="specline">'+e.spec+'</div>':"")+
       '</div></details>';
   });
+  if(openPair) html+='</div>';
+
   html+='<button class="btn go" id="saveSession" style="margin-top:4px">Save '+p.name+'</button>';
-  html+='<p class="tiny" style="text-align:center;margin-top:10px">RIR = reps left in the tank. RPE is just 10 − RIR, so there is only one box to fill.</p>';
+  html+='<p class="tiny" style="text-align:center;margin-top:10px">RIR = reps left in the tank. RPE is 10 − RIR, so there is only one box to fill. Warm-up ticks are not logged.</p>';
   document.getElementById("sessionBody").innerHTML=html;
+}
+
+function wuHTML(top,i){
+  var rows=warmupRows(top);
+  if(!rows) return '<div class="wuh">Warm-up</div><div class="note">Appears once a target or set-1 load is known.</div>';
+  return '<div class="wuh">Warm-up — tick only, not logged</div>'+
+    rows.map(function(r,j){
+      return '<div class="wurow" data-tick="'+i+'-'+j+'" aria-pressed="false"><span class="tick">✓</span>'+
+        r[0]+' kg × '+r[1]+'</div>';
+    }).join("")+
+    '<div class="note">Ramp at normal tempo. The 3-3 tempo applies to working sets only — slow warm-ups just add fatigue.</div>';
 }
 
 document.getElementById("pickSession").addEventListener("click",function(e){
@@ -544,29 +801,31 @@ document.getElementById("pickSession").addEventListener("click",function(e){
 });
 
 document.getElementById("sessionBody").addEventListener("click",function(e){
-  var cp=e.target.closest("[data-copy]"); if(!cp) return;
-  var i=cp.dataset.copy;
-  var first={};
-  ["load","reps","rir"].forEach(function(f){
-    var el=document.querySelector('input[data-f="'+f+'"][data-e="'+i+'"][data-s="1"]');
-    first[f]=el?el.value:"";
-  });
-  document.querySelectorAll('input[data-e="'+i+'"]').forEach(function(el){
-    if(el.dataset.s!=="1") el.value=first[el.dataset.f];
-  });
-  toast("Copied down");
+  var tk=e.target.closest("[data-tick]");
+  if(tk){ tk.setAttribute("aria-pressed",tk.getAttribute("aria-pressed")==="true"?"false":"true"); return; }
+  var cp=e.target.closest("[data-copy]");
+  if(cp){
+    var i=cp.dataset.copy, first={};
+    ["load","reps","rir"].forEach(function(f){
+      var el=document.querySelector('input[data-f="'+f+'"][data-e="'+i+'"][data-s="1"]');
+      first[f]=el?el.value:"";
+    });
+    document.querySelectorAll('input[data-e="'+i+'"]').forEach(function(el){
+      if(el.dataset.s!=="1") el.value=first[el.dataset.f];
+    });
+    toast("Copied down"); return;
+  }
 });
 
 document.getElementById("sessionBody").addEventListener("input",function(e){
   var el=e.target; if(el.dataset.f!=="load"||el.dataset.s!=="1") return;
   var wu=document.querySelector('[data-wu="'+el.dataset.e+'"]'); if(!wu) return;
-  var w=warmups(parseFloat(el.value));
-  wu.textContent=w?"Warm-up: "+w:"Warm-ups appear once set 1 load is entered.";
+  wu.innerHTML=wuHTML(parseFloat(el.value),el.dataset.e);
 });
 
 document.getElementById("sessionBody").addEventListener("click",function(e){
   if(!e.target.closest("#saveSession")) return;
-  var p=PROG[curSession], exs=[], bad=false;
+  var p=PROG[curSession], exs=[], bad=false, flags={tendon:false,hinge:false,axial:false};
   document.querySelectorAll("input.miss").forEach(function(el){el.classList.remove("miss")});
   p.ex.forEach(function(ex,i){
     var sets=[];
@@ -575,57 +834,146 @@ document.getElementById("sessionBody").addEventListener("click",function(e){
       var L=q("load"),R=q("reps"),I=q("rir");
       if(!L) continue;
       var lv=L.value.trim(), rv=R.value.trim(), iv=I.value.trim();
-      if(!lv&&!rv&&!iv) continue;                 // untouched set, fine
-      if(!rv){ R.classList.add("miss"); bad=true; } // the old chin-up bug
+      if(!lv&&!rv&&!iv) continue;
+      if(!rv){ R.classList.add("miss"); bad=true; }
       sets.push({load:lv,reps:rv,rir:iv});
     }
-    if(sets.length) exs.push({name:ex.name||ex.n,sets:sets});
+    if(sets.length){
+      exs.push({name:ex.n,sets:sets});
+      if(ex.tendon) flags.tendon=true;
+      if(ex.hinge)  flags.hinge=true;
+      if(ex.axial)  flags.axial=true;
+    }
   });
   if(bad){toast("Every logged set needs reps");return}
   if(!exs.length){toast("Nothing entered");return}
-  DB.sessions.push({date:today(),type:curSession,exercises:exs});
+  DB.sessions.push({date:today(),type:curSession,exercises:exs,flags:flags});
   DB.sessions.sort(function(a,b){return a.date<b.date?-1:1});
+  if(!DB.blockStart) DB.blockStart=today();
   save(); renderAll(); toast(p.name+" saved"); go("today");
 });
 
-/* ═══════════ cardio + iso ═══════════ */
+/* ═══════════ cardio / iso / vitals / weight ═══════════ */
 function segVal(k){var el=document.querySelector('.seg[data-k="'+k+'"]');return el?el.dataset.val:null}
+function scaleVal(k){var el=document.querySelector('.scale[data-k="'+k+'"]');return el&&el.dataset.val!==undefined?parseInt(el.dataset.val,10):null}
+
 document.getElementById("saveCardio").addEventListener("click",function(){
   var m=parseInt(document.getElementById("cMin").value,10);
   if(!m){toast("Minutes?");return}
   DB.cardio.push({date:today(),mode:segVal("cmode")||"Ride",minutes:m,
-    cadence:document.getElementById("cCad").value||null,talk:segVal("talk")||null});
+    cadence:document.getElementById("cCad").value||null,
+    hr:document.getElementById("cHR").value||null,
+    rpe:document.getElementById("cRPE").value||null,
+    talk:segVal("talk")||null});
   DB.cardio.sort(function(a,b){return a.date<b.date?-1:1});
-  save(); renderAll(); toast("Cardio saved"); go("today");
+  save(); renderAll(); toast(m<30?"Saved — short of the 30 min target":"Cardio saved"); go("today");
 });
+
 document.getElementById("saveIso").addEventListener("click",function(){
   var s=parseInt(document.getElementById("iSets").value,10);
   if(!s){toast("Sets?");return}
   DB.iso.push({date:today(),mode:segVal("imode")||"Isometrics",sets:s,
-    hold:parseInt(document.getElementById("iHold").value,10)||null});
+    hold:parseInt(document.getElementById("iHold").value,10)||null,
+    angle:segVal("iang")||null,
+    painDuring:scaleVal("ipain")});
   DB.iso.sort(function(a,b){return a.date<b.date?-1:1});
   save(); renderAll(); toast("Isometrics saved"); go("today");
 });
 
+document.getElementById("saveVitals").addEventListener("click",function(){
+  var h=parseInt(document.getElementById("vHR").value,10);
+  if(!h){toast("Resting HR?");return}
+  DB.vitals=DB.vitals.filter(function(x){return x.date!==today()});
+  DB.vitals.push({date:today(),rhr:h,
+    hrv:parseInt(document.getElementById("vHRV").value,10)||null,
+    status:segVal("vstat")||null});
+  DB.vitals.sort(function(a,b){return a.date<b.date?-1:1});
+  save(); renderAll(); toast("Saved"); go("today");
+});
+
+document.getElementById("saveWeight").addEventListener("click",function(){
+  var k=parseFloat(document.getElementById("wKg").value);
+  if(!k||k<40||k>250){toast("Weight in kg?");return}
+  DB.weight=DB.weight.filter(function(x){return x.date!==today()});
+  DB.weight.push({date:today(),kg:k,bf:parseFloat(document.getElementById("wBf").value)||null});
+  DB.weight.sort(function(a,b){return a.date<b.date?-1:1});
+  save(); renderAll(); toast("Weight saved"); go("today");
+});
+
 /* ═══════════ history ═══════════ */
-function within(arr,n){var cut=new Date();cut.setDate(cut.getDate()-n);
-  var c=cut.toISOString().slice(0,10);return arr.filter(function(x){return x.date>=c})}
+function within(arr,n){var c=shift(today(),-(n-1));return arr.filter(function(x){return x.date>=c})}
+
+/* isometric exposures = standalone entries + any session that logged one */
+function isoCount(days){
+  var n=within(DB.iso,days).length;
+  within(DB.sessions,days).forEach(function(s){
+    s.exercises.forEach(function(e){
+      if(/wall sit|spanish/i.test(e.name)) n++;
+    });
+  });
+  return n;
+}
+
 function renderHist(){
-  var s28=within(DB.sessions,28), c28=within(DB.cardio,28), i28=within(DB.iso,28);
-  var weeks=4;
-  document.getElementById("freqSummary").innerHTML=
-    '<div class="spread"><span class="muted">Barbell sessions</span><span class="mono" style="font-family:var(--mono)"><b>'+s28.length+'</b>  ·  '+(s28.length/weeks).toFixed(1)+'/wk</span></div><div class="hr"></div>'+
-    '<div class="spread"><span class="muted">Cardio</span><span style="font-family:var(--mono)"><b>'+c28.length+'</b>  ·  '+(c28.length/weeks).toFixed(1)+'/wk</span></div><div class="hr"></div>'+
-    '<div class="spread"><span class="muted">Isometrics</span><span style="font-family:var(--mono)"><b>'+i28.length+'</b>  ·  '+(i28.length/weeks).toFixed(1)+'/wk</span></div><div class="hr"></div>'+
-    '<div class="spread"><span class="muted">Morning checks</span><span style="font-family:var(--mono)"><b>'+within(DB.checks,28).length+'</b> of 28</span></div>'+
-    (s28.length<8?'<div class="caution">Target is 3 barbell sessions a week — 12 in 28 days. You are at '+s28.length+'.</div>':"");
+  var dod=daysOfData();
+  var win=Math.min(28,Math.max(1,dod));
+  var weeks=win/7;
+  document.getElementById("freqEyebrow").textContent =
+    dod>=28 ? "Last 28 days" : "Last "+win+" day"+(win===1?"":"s")+" — all the data there is";
+
+  var s=within(DB.sessions,win), c=within(DB.cardio,win), i=isoCount(win), ch=within(DB.checks,win);
+  var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).length;
+
+  function line(lbl,n,per,target){
+    return '<div class="spread"><span class="muted">'+lbl+'</span><span class="mono"><b>'+n+'</b> · '+
+      per.toFixed(1)+'/wk'+(target?' <span style="color:var(--ink-3)">of '+target+'</span>':'')+'</span></div>';
+  }
+  var html=
+    line("Barbell sessions",s.length,s.length/weeks,3)+'<div class="hr"></div>'+
+    line("Tendon exposures",tend,tend/weeks,3)+'<div class="hr"></div>'+
+    line("Cardio",c.length,c.length/weeks,2)+'<div class="hr"></div>'+
+    line("Isometrics",i,i/weeks,0)+'<div class="hr"></div>'+
+    '<div class="spread"><span class="muted">Morning checks</span><span class="mono"><b>'+ch.length+'</b> of '+win+'</span></div>';
+
+  if(dod<14){
+    html+='<div class="specline">Rates are over '+dod+' day'+(dod===1?"":"s")+' of data, not 28. Anything under two weeks is too short to read as a trend — the denominator is the honest one now, so early weeks no longer look like a collapse in frequency.</div>';
+  } else if(s.length/weeks < 2.4){
+    html+='<div class="caution">Target is 3 barbell sessions a week. You are averaging '+(s.length/weeks).toFixed(1)+'. Frequency has historically been your limiting variable, not load.</div>';
+  }
+  document.getElementById("freqSummary").innerHTML=html;
+
+  /* weight sparkline */
+  var wt=DB.weight.slice(-20);
+  if(!wt.length) document.getElementById("wTrend").innerHTML='<p class="muted" style="margin:0">No weigh-ins yet.</p>';
+  else{
+    var lo=Math.min.apply(null,wt.map(function(x){return x.kg}))-0.5;
+    var hi=Math.max.apply(null,wt.map(function(x){return x.kg}))+0.5;
+    var span=Math.max(0.1,hi-lo);
+    document.getElementById("wTrend").innerHTML=
+      '<div class="spread"><span class="mono">'+wt[0].kg.toFixed(1)+'</span>'+
+      '<span class="tiny">'+wt.length+' weigh-in'+(wt.length===1?"":"s")+'</span>'+
+      '<span class="mono">'+wt[wt.length-1].kg.toFixed(1)+'</span></div>'+
+      '<div class="bars">'+wt.map(function(x){
+        var h=Math.round(((x.kg-lo)/span)*100);
+        return '<i style="height:'+Math.max(4,h)+'%;background:var(--tier)"></i>';
+      }).join("")+'</div>'+
+      '<p class="tiny" style="margin:8px 0 0">Target 105 kg. Scale is auto-zoomed, so small wobbles look dramatic — read the numbers, not the bars.</p>';
+  }
 
   var all=[];
   DB.sessions.forEach(function(x){all.push({d:x.date,t:"Session "+x.type,
     s:x.exercises.map(function(e){return e.name+" "+e.sets.length+"×"}).join(", ")})});
-  DB.cardio.forEach(function(x){all.push({d:x.date,t:"Cardio",s:x.mode+" · "+x.minutes+" min"+(x.cadence?" · "+x.cadence+" rpm":"")})});
-  DB.iso.forEach(function(x){all.push({d:x.date,t:"Isometrics",s:x.mode+" · "+x.sets+"×"+(x.hold||"?")+"s"})});
-  DB.checks.forEach(function(x){all.push({d:x.date,t:"Check",s:tierOf(x)+" · stairs "+x.stairs+" · decline "+x.decline+(x.swell?" · SWELLING":"")})});
+  DB.cardio.forEach(function(x){all.push({d:x.date,t:"Cardio",s:x.mode+" · "+x.minutes+" min"+
+    (x.cadence?" · "+x.cadence+" rpm":"")+(x.hr?" · "+x.hr+" bpm":"")+(x.talk==="no"?" · Z3":"")})});
+  DB.iso.forEach(function(x){
+    var nx=checkOn(shift(x.date,1));
+    all.push({d:x.date,t:"Isometrics",s:x.mode+" · "+x.sets+"×"+(x.hold||"?")+"s"+
+      (x.angle?" · "+x.angle:"")+(x.painDuring!==null&&x.painDuring!==undefined?" · pain "+x.painDuring+"/10":"")+
+      (nx?" · next AM decline "+nx.decline:"")})});
+  DB.weight.forEach(function(x){all.push({d:x.date,t:"Weight",s:x.kg.toFixed(1)+" kg"+(x.bf?" · "+x.bf+"% bf":"")})});
+  DB.vitals.forEach(function(x){all.push({d:x.date,t:"Vitals",s:"RHR "+x.rhr+(x.hrv?" · HRV "+x.hrv:"")+(x.status?" · "+x.status:"")})});
+  DB.checks.forEach(function(x){all.push({d:x.date,t:"Check",s:tierOf(x)+" · stairs "+x.stairs+" · decline "+x.decline+
+    (x.backStiff!==undefined?" · back "+x.backStiff+" min":"")+(x.swell?" · SWELLING":"")})});
   all.sort(function(a,b){return a.d<b.d?1:-1});
   document.getElementById("histList").innerHTML= all.length?
     all.map(function(x){return '<div class="hitem"><div class="spread"><span class="tag">'+x.t+
@@ -635,31 +983,49 @@ function renderHist(){
 
 /* ═══════════ export ═══════════ */
 function textExport(){
-  var L=[], first=DB.sessions.length?DB.sessions[0].date:today();
+  var L=[], dod=daysOfData(), win=Math.min(28,Math.max(1,dod)), weeks=win/7;
   L.push("TRAINING LEDGER EXPORT — "+pretty(today()));
-  L.push("Days of data: "+(daysBetween(first,today())+1));
+  L.push("Days of data: "+dod+"  (rates below are per week over "+win+" days)");
+  if(DB.blockStart) L.push("Block week: "+(Math.floor(daysBetween(DB.blockStart,today())/7)+1));
   L.push("");
-  var s28=within(DB.sessions,28),c28=within(DB.cardio,28),i28=within(DB.iso,28);
-  L.push("FREQUENCY (last 28 days)");
-  L.push("  Barbell:    "+s28.length+"  ("+(s28.length/4).toFixed(1)+"/wk, target 3)");
-  L.push("  Cardio:     "+c28.length+"  ("+(c28.length/4).toFixed(1)+"/wk, target 2)");
-  L.push("  Isometrics: "+i28.length);
-  L.push("  Days since squat / hinge / cardio: "+
-    [daysAgo(lastSquat()),daysAgo(lastHinge()),daysAgo(lastCardio())].map(function(x){return x===null?"never":x}).join(" / "));
+  var s=within(DB.sessions,win), c=within(DB.cardio,win), i=isoCount(win);
+  var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).length;
+  L.push("FREQUENCY");
+  L.push("  Barbell:    "+s.length+"  ("+(s.length/weeks).toFixed(1)+"/wk, target 3)");
+  L.push("  Tendon:     "+tend+"  ("+(tend/weeks).toFixed(1)+"/wk, target 3)");
+  L.push("  Cardio:     "+c.length+"  ("+(c.length/weeks).toFixed(1)+"/wk, target 2)");
+  L.push("  Isometrics: "+i);
+  L.push("  Days since tendon / hinge / cardio: "+
+    [daysAgo(lastTendon()),daysAgo(lastHinge()),daysAgo(lastCardio())].map(function(x){return x===null?"never":x}).join(" / "));
   L.push("");
+
+  L.push("BODY WEIGHT  (target ~105 kg)");
+  if(!DB.weight.length) L.push("  (none)");
+  DB.weight.slice(-10).forEach(function(w){L.push("  "+w.date+": "+w.kg.toFixed(1)+" kg"+(w.bf?"  ·  "+w.bf+"% bf":""))});
+  var r7=avgWeight(shift(today(),-6),today()), p7=avgWeight(shift(today(),-13),shift(today(),-7));
+  if(r7!==null&&p7!==null) L.push("  7-day trend: "+((r7-p7)>0?"+":"")+(r7-p7).toFixed(2)+" kg/wk");
+  L.push("");
+
+  L.push("RESTING HR / HRV");
+  if(!DB.vitals.length) L.push("  (none)");
+  DB.vitals.slice(-8).forEach(function(v){L.push("  "+v.date+": RHR "+v.rhr+(v.hrv?"  ·  HRV "+v.hrv:"")+(v.status?"  ·  "+v.status:""))});
+  L.push("");
+
   L.push("MORNING CHECKS");
   if(!DB.checks.length) L.push("  (none)");
   DB.checks.slice(-21).forEach(function(c){
     L.push("  "+c.date+": "+tierOf(c).toUpperCase()+
       " (stairs "+c.stairs+", decline "+c.decline+", joint-line "+c.jointLine+
-      ", stiff "+c.stiff+" min, swell "+(c.swell?"yes":"no")+")");
+      ", stiff "+c.stiff+" min, swell "+(c.swell?"yes":"no")+
+      (c.backStiff!==undefined?", back stiff "+c.backStiff+" min":"")+")");
   });
   L.push("");
+
   L.push("SESSIONS  [load × reps @ RIR]");
   if(!DB.sessions.length) L.push("  (none)");
   DB.sessions.forEach(function(s){
     L.push("");
-    L.push(s.date+"  SESSION "+s.type);
+    L.push(s.date+"  SESSION "+s.type+(s.flags&&s.flags.tendon?"  [tendon]":""));
     s.exercises.forEach(function(e){
       L.push("  "+e.name);
       e.sets.forEach(function(st,i){
@@ -668,16 +1034,26 @@ function textExport(){
     });
   });
   L.push("");
+
   L.push("CARDIO");
   if(!DB.cardio.length) L.push("  (none)");
   DB.cardio.forEach(function(c){L.push("  "+c.date+": "+c.mode+" "+c.minutes+" min"+
-    (c.cadence?" @ "+c.cadence+" rpm":"")+(c.talk?" · talk test "+c.talk:""))});
+    (c.cadence?" @ "+c.cadence+" rpm":"")+(c.hr?"  ·  avg HR "+c.hr:"")+
+    (c.rpe?"  ·  RPE "+c.rpe:"")+(c.talk?"  ·  talk test "+c.talk:""))});
   L.push("");
+
   L.push("ISOMETRICS / HOME");
   if(!DB.iso.length) L.push("  (none)");
-  DB.iso.forEach(function(c){L.push("  "+c.date+": "+c.mode+" "+c.sets+" × "+(c.hold||"?")+" s")});
+  DB.iso.forEach(function(x){
+    var nx=checkOn(shift(x.date,1));
+    L.push("  "+x.date+": "+x.mode+" "+x.sets+" × "+(x.hold||"?")+" s"+
+      (x.angle?"  ·  "+x.angle:"")+
+      (x.painDuring!==null&&x.painDuring!==undefined?"  ·  pain during "+x.painDuring+"/10":"")+
+      (nx?"  ·  next AM decline "+nx.decline+"/5":"  ·  next AM not logged"));
+  });
   return L.join("\n");
 }
+
 document.getElementById("btnText").addEventListener("click",function(){
   document.getElementById("outBox").textContent=textExport();
   DB.lastExport=today(); save(); renderData();
@@ -697,37 +1073,72 @@ document.getElementById("btnImport").addEventListener("click",function(){
   try{
     var o=JSON.parse(raw);
     if(!o||typeof o!=="object") throw 0;
-    DB=Object.assign(JSON.parse(JSON.stringify(BLANK)),o);
-    ["checks","sessions","cardio","iso"].forEach(function(k){if(!Array.isArray(DB[k]))DB[k]=[]});
+    DB=migrate(o);
     save(); renderAll(); toast("Restored"); go("today");
   }catch(e){toast("That is not valid JSON")}
 });
+
 function renderData(){
   var n="", d=daysAgo(DB.lastExport);
   if(d===null) n='<div class="alert warn"><b>No backup yet</b>Copy the JSON somewhere safe. Safari clears storage after roughly a week of not opening the app.</div>';
   else if(d>=7) n='<div class="alert warn"><b>Last backup '+d+' days ago</b>Copy the JSON again.</div>';
   document.getElementById("backupNag").innerHTML=n;
+
+  var bb=document.getElementById("blockBox");
+  if(!DB.blockStart) bb.innerHTML='<p class="muted" style="margin:0">Block starts on your next logged session.</p>';
+  else{
+    var wk=Math.floor(daysBetween(DB.blockStart,today())/7)+1;
+    bb.innerHTML='<div class="spread"><span class="muted">Week</span><span class="mono" style="font-size:20px;font-weight:600">'+wk+'</span></div>'+
+      '<div class="hr"></div><p class="muted" style="margin:0">Started '+pretty(DB.blockStart)+'.</p>'+
+      (wk>=6?'<div class="caution">Week '+wk+' — deload due. Drop volume about 40%, hold the load, keep the tempo. Deload on the first amber week if that comes sooner.</div>'
+            :'<p class="tiny" style="margin:8px 0 0">Deload at week 6, or on the first amber week — whichever arrives first.</p>')+
+      '<button class="btn slim" id="btnNewBlock" style="margin-top:11px">Start a new block</button>';
+  }
+
+  var rules=[
+    ["Tendon work (box squat, leg press)","Hold reps and tempo constant. Add load only when every set hits the target RIR with the tempo intact. The 3 s eccentric degrades before RIR does — if it shortens, the load is wrong whatever the number says. Over twelve weeks the intent is to migrate from roughly 12–15RM toward 6–8RM."],
+    ["Leg press specifically","RIR 5 for the first two weeks regardless of how easy it feels. This is a brand-new weekly dose of knee-extensor load; the failure mode is being impatient in week one and backing off in week three."],
+    ["Deadlift","Load moves when all three sets hit RIR 3 with bar speed maintained. Next-morning lower-back stiffness over 30 minutes means the last jump was too big."],
+    ["RDL","Capped at RIR 3. If you want more from it, add a 3 s eccentric before you add load."],
+    ["Overhead press","Slowest progression in the programme, and deliberately so. Repaired labrum, and it is the only lift sitting close to failure."],
+    ["Pull-ups","Bodyweight until 10 / 10 / 8. The neutral-grip chin-up is the loaded vertical pull."],
+    ["Pain rules","Pain up to 3–4/10 during tendon sets is acceptable and expected. The signal that matters is the next morning: if stairs or decline are worse 24 h later, the load was too much."],
+    ["Deload","Week 6, or the first amber week. Volume −40%, load held, tempo kept."]
+  ];
+  document.getElementById("rules").innerHTML=rules.map(function(s){
+    return '<details class="ex" style="margin-bottom:7px"><summary><div class="nm" style="font-size:14px">'+s[0]+
+      '</div><div class="chev">›</div></summary><div class="exbody"><p class="muted" style="margin:10px 0 0">'+s[1]+'</p></div></details>'}).join("");
+
   var specs=[
-    ["Box squat","Parallel box, high bar, 3 s down / 3 s up. Heavy slow resistance is the loading style with the best support in patellar tendinopathy — the slow tempo is the active ingredient, not the depth."],
-    ["Isometrics","5 × 45 s at ~70% effort. Often gives 30–45 min of reduced pain afterwards, which makes it useful immediately before squatting. The analgesic effect is inconsistent across studies — do not read too much into a day it does not work."],
-    ["Deadlift","Straight sets, full rest, never supersetted. Stop when bar speed drops."],
+    ["Box squat","Parallel box, high bar, 3 s down / 3 s up. Heavy slow resistance has the best support of the loading styles in patellar tendinopathy — the slow tempo is the active ingredient, not the depth. Worth being honest: HSR and eccentric protocols perform similarly on pain and function in most head-to-head trials, and the collagen-turnover mechanism often cited for HSR is not well established. The solid part is that heavy, slow, progressive loading beats rest, and adherence to HSR is better."],
+    ["Leg press","Two of your three weekly tendon exposures. A machine despite the free-weight preference, for two specific reasons: no axial spinal load on days that already contain a deadlift or RDL, and small precise load increments, which tendon protocols need."],
+    ["Isometrics","5 × 45 s at ~70% effort. Often gives 30–45 min of reduced pain afterwards, which makes it useful immediately before squatting. The analgesic effect is inconsistent across studies — do not read too much into a day it does not work. Isometrics are a holding pattern on red days, not a substitute for heavy slow loading."],
+    ["Deadlift","Straight sets, full rest, never supersetted. Stop when bar speed drops. Concentric-first from a dead stop: no pre-tension, no stretch reflex, which is why it trains starting strength and why it is neurally expensive."],
+    ["RDL","Eccentric-first within each rep, from the top, out of the rack. Knee angle fixed near 15–20°; all bar travel from the hip. Stop where the pelvis stops rotating. No touch-down between reps. Not a tendon exposure — knee extensor moment is near zero."],
     ["Overhead press","In front of the face only. Nothing behind the neck with a repaired labrum."],
-    ["Chin-ups","Neutral grip in B — less anterior shoulder load than supinated."],
-    ["Pull-ups","Bodyweight until 10 / 10 / 8 before adding load."],
-    ["Cycling","85–95 rpm, low resistance. Seated. Tendon force follows pedal force."],
-    ["Indian clubs","10 kg only, front of body. Behind-the-head patterns need a conversation first."]
+    ["Chin-ups","Neutral grip in B — less anterior shoulder load than supinated. This is the loaded one."],
+    ["Pull-ups","Pronated in C, bodyweight until 10 / 10 / 8."],
+    ["DB row in C","Chest-supported or single-arm, replacing the barbell row in this session only. Reduces axial spinal load on a hinge-heavy day. Barbell row stays in Session A."],
+    ["Cycling","95–105 rpm, low resistance, seated. Tendon and patellofemoral force follow pedal force, so spin light rather than grind. 30–45 min. If the talk test fails it was Zone 3, and Zone 3 competes with lifting without buying much extra aerobic return."],
+    ["Indian clubs","10 kg only, front of body. Behind-the-head patterns need a conversation first."],
+    ["Nutrition anchors","Roughly 2.0–2.2 g protein per kg body weight while in a deficit — call it 225–245 g at 112 kg. Deficit around 400–500 kcal, which is the 0.4–0.5 kg/week rate. Gout: the dominant dietary levers are alcohol (beer especially), fructose-sweetened drinks, and hydration; purine-rich meat and seafood matter less than they were once thought to. Rapid weight loss and dehydration both raise urate, so a slow deficit is the gout-safe one as well as the muscle-safe one. Blood pressure: sodium reduction and aerobic volume are the two levers with the strongest evidence."]
   ];
   document.getElementById("specs").innerHTML=specs.map(function(s){
     return '<details class="ex" style="margin-bottom:7px"><summary><div class="nm" style="font-size:14px">'+s[0]+
       '</div><div class="chev">›</div></summary><div class="exbody"><p class="muted" style="margin:10px 0 0">'+s[1]+'</p></div></details>'}).join("");
 }
 
+document.getElementById("v-data").addEventListener("click",function(e){
+  if(!e.target.closest("#btnNewBlock")) return;
+  DB.blockStart=today(); save(); renderData(); toast("New block started");
+});
+
 /* ═══════════ nav ═══════════ */
 var TITLES={today:"Today",lift:"Lift",cardio:"Cardio & home",hist:"History",data:"Data"};
 function go(v){
   document.querySelectorAll(".view").forEach(function(s){s.classList.toggle("on",s.id==="v-"+v)});
   document.querySelectorAll("nav button").forEach(function(b){b.setAttribute("aria-current",String(b.dataset.v===v))});
-  document.getElementById("hdTitle").textContent=TITLES[v];
+  document.getElementById("hdTitle").textContent=TITLES[v]||"Today";
   window.scrollTo(0,0);
   if(v==="hist") renderHist();
   if(v==="data") renderData();
@@ -737,11 +1148,14 @@ document.querySelector("nav").addEventListener("click",function(e){
   var b=e.target.closest("button[data-v]"); if(b) go(b.dataset.v);
 });
 document.getElementById("v-today").addEventListener("click",function(e){
-  var b=e.target.closest("[data-jump]"); if(b) go("cardio");
+  var b=e.target.closest("[data-jump]"); if(!b) return;
+  go("cardio");
+  var id = b.dataset.jump==="bw" ? "bwCard" : b.dataset.jump==="vitals" ? "vitalsCard" : null;
+  if(id) setTimeout(function(){document.getElementById(id).scrollIntoView({block:"start"})},60);
 });
 
 function renderAll(){renderToday();renderSession();renderHist();renderData()}
-wirePickers(); renderAll(); go("today");
+buildScales(); wirePickers(); renderAll(); go("today");
 </script>
 </body>
 </html>
