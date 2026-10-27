@@ -309,25 +309,31 @@ nav button[aria-current="true"]{color:var(--tier)}
   <div class="card">
     <div class="eyebrow">Isometrics / home</div>
     <div class="field">
-      <label>What did you do?</label>
-      <div class="seg" data-k="imode">
+      <label>What did you do? — select all that apply</label>
+      <div class="seg" data-k="imode" data-multi="1">
         <button data-v="Spanish squat">Spanish squat</button><button data-v="Wall sit">Wall sit</button>
-        <button data-v="KB circuit">KB circuit</button><button data-v="Core / anti-flexion">Core</button>
+        <button data-v="KB circuit">KB circuit</button><button data-v="Core">Core</button>
       </div>
     </div>
-    <div class="field">
-      <label>Position / knee angle</label>
-      <div class="seg" data-k="iang">
-        <button data-v="60°">~60°</button><button data-v="90°">~90°</button><button data-v="Other">Other</button>
+    <div id="isoKnee">
+      <div class="field">
+        <label>Position / knee angle</label>
+        <div class="seg" data-k="iang">
+          <button data-v="60°">~60°</button><button data-v="90°">~90°</button><button data-v="Other">Other</button>
+        </div>
+      </div>
+      <div class="row" style="gap:8px">
+        <div class="field" style="flex:1"><label>Sets</label><input id="iSets" type="number" inputmode="numeric" placeholder="5"></div>
+        <div class="field" style="flex:1"><label>Hold (sec)</label><input id="iHold" type="number" inputmode="numeric" placeholder="45"></div>
+      </div>
+      <div class="field">
+        <label>Pain during hold (0–10)</label>
+        <div class="scale wide" data-k="ipain"></div>
       </div>
     </div>
-    <div class="row" style="gap:8px">
-      <div class="field" style="flex:1"><label>Sets</label><input id="iSets" type="number" inputmode="numeric" placeholder="5"></div>
-      <div class="field" style="flex:1"><label>Hold (sec)</label><input id="iHold" type="number" inputmode="numeric" placeholder="45"></div>
-    </div>
-    <div class="field">
-      <label>Pain during hold (0–10)</label>
-      <div class="scale wide" data-k="ipain"></div>
+    <div class="field" id="isoMinWrap" style="display:none">
+      <label>Minutes — KB circuit / core (optional)</label>
+      <input id="iMin" type="number" inputmode="numeric" placeholder="15">
     </div>
     <button class="btn go" id="saveIso">Save isometrics</button>
     <div class="caution">5 × 45 s at an effort you could hold for about 60 s, 2 min between. Three sets is under-dosed. Often analgesic for 30–45 min afterwards, which makes it useful immediately before squatting — but that effect is inconsistent across trials, so treat it as a tool, not a cure. Next-morning response is read automatically from tomorrow's check.</div>
@@ -434,7 +440,7 @@ function canStore(){try{localStorage.setItem("__t","1");localStorage.removeItem(
 memOnly=!canStore();
 if(memOnly) document.getElementById("storeWarn").style.display="block";
 
-var BLANK={version:6,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
+var BLANK={version:7,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
            blockStart:null,lastExport:null};
 
 /* Re-entry block after the September holiday gap. Applied once, by the
@@ -461,7 +467,9 @@ function migrate(o){
   });
   /* v4 → v5: cardio gained hrMax. Old rows simply have it undefined; the
      old `rpe` field is left in place and still printed if present. */
-  o.version=6;
+  /* v6 → v7: iso entries may carry a `modes` array (multi-select) and an
+     optional `minutes`. Old rows keep their single `mode` string untouched. */
+  o.version=7;
   return o;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){
@@ -544,52 +552,63 @@ function renderHR(){
 var PROG={
 A:{name:"Session A",tag:"Squat · Bench ⟋ DB Row · ~42 min",ex:[
   {n:"Box Squat",d:"high bar · parallel box",sets:4,reps:"6",tempo:"3-1-3",rir:"3–4",rest:"3 min",
-   target:135,axial:true,knee:true,tendon:true,wu:true,
+   target:145,axial:true,knee:true,tendon:true,wu:true,
    c:"Parallel box is the permanent default, not a stage you graduate from. With meniscal tissue removed on both sides, deep loaded flexion concentrates contact pressure over less cartilage.",
-   spec:"Tendon exposure 1 of 3. The 3 s down / 3 s up is the active ingredient — if the eccentric shortens, the load is too heavy regardless of what the RIR says. Stop the set, not the tempo. 130 × 6 has been logged at RIR 5–6, and holiday hiking with long loaded descents was tolerated with tendon pain ≤ 3/10, so 135 is the re-entry load on a green morning. RIR 5+ is under-dosed for heavy slow resistance: add 5 kg when every set lands at RIR 4 or higher."},
+   spec:"All sets RIR ≥3 with the 3-1-3 tempo intact on a green morning → +5 kg; any set RIR ≤2, or an amber morning → hold."},
   {n:"Bench Press",d:"straight sets — no intra-session jumps",sets:4,reps:"5",tempo:"2-0-1",rir:"2–3",rest:"90 s rest after each pair",
-   target:112.5,pair:"A1",wu:true,
+   target:115,pair:"A1",wu:true,
    c:"Keep the grip inside the widest setting and the elbows tucked to roughly 45°. Wide grip plus low elbows is the position that stresses a repaired labrum.",
-   spec:"All four sets at the same load. 6 Oct at 115 went RIR 2/2/0/0, so 112.5 this week and 115 next. Progress to 117.5 only when all four sets land at RIR 2 or more. If a set hits RIR 1 or less, drop 5 kg for the remaining sets. Late-set RIR is also the test for whether the 90 s pair rest is enough."},
+   spec:"All sets RIR ≥2 → +2.5 kg; any set at RIR 1 or less → hold."},
   {n:"DB Row",d:"per hand · one arm at a time, bench-supported",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"90 s rest after each pair",
-   target:45,pair:"A1",
-   spec:"Replaces the barbell row in this superset for logistics — a pair of dumbbells next to the bench beats holding a second barbell station. The barbell row has moved to Session C. Log the per-hand weight."}
+   target:50,inc:2,pair:"A1",
+   spec:"All sets RIR ≥3 → +2 kg per hand."}
 ]},
 B:{name:"Session B",tag:"Deadlift · Leg press · OHP ⟋ Chin · ~42 min",ex:[
   {n:"Deadlift",d:"conventional · straight sets · dead stop",sets:3,reps:"5",tempo:"1-0-1",rir:"3",rest:"3–4 min",
-   target:140,axial:true,hinge:true,wu:true,
+   target:145,axial:true,hinge:true,wu:true,
    c:"Never supersetted. Full rest, and stop the set the moment bar speed drops rather than grinding a rep out.",
-   spec:"Lower over 1–2 s to a dead stop. There is no 3-3 tempo here — that belongs to the tendon lifts. Not a tendon exposure either: knee extensor moment is low and brief, so a heavy pull day never substitutes for a squat or leg press. Re-entry at 140 after a month without a hinge — hiking does not train it. Back to 150 next week if all sets sit at RIR 3+ with bar speed held."},
+   spec:"All sets RIR ≥3 with bar speed held → +5 kg."},
   {n:"Leg Press",d:"depth capped at box-squat depth",sets:3,reps:"8",tempo:"3-1-3",rir:"3–4",rest:"2 min",
-   target:110,knee:true,tendon:true,
-   spec:"Tendon exposure 2 of 3. Logged at RIR 6–8 so far — that is warm-up territory, not an adaptive stimulus. Working load is the one that gives 8 reps at RIR 3–4 with the tempo intact. Pick it in set 1 and hold it; add 5 kg when all three sets come in at RIR 4 or higher."},
+   target:115,knee:true,tendon:true,
+   spec:"All sets RIR ≥3 with the 3-1-3 tempo intact → +5 kg."},
   {n:"Overhead Press",d:"standing barbell",sets:3,reps:"6",tempo:"2-0-1",rir:"2–3",rest:"90 s rest after each pair",
-   target:70,pair:"B1",hold:true,wu:true,
+   target:65,pair:"B1",wu:true,
    c:"Bar path in front of the face, finishing overhead. Nothing behind the neck.",
-   spec:"Hold 70. The last logged sets were RIR 2/2/1/1 — below target. Add 2.5 kg only when all three sets sit at RIR 3. Micro-plates required."},
-  {n:"Weighted Chin-up",d:"neutral grip · added kg",sets:3,reps:"6–8",tempo:"2-0-1",rir:"2",rest:"90 s rest after each pair",
+   spec:"All sets RIR ≥3 → +5 kg back to 70 kg, then +2.5 kg steps.",
+   alt:{n:"Overhead Press (DB)",d:"standing dumbbells · per hand",reps:"8",target:40,inc:2,wu:false,
+        spec:"All sets RIR ≥3 → +2 kg per hand."}},
+  {n:"Weighted Chin-up",d:"neutral grip · added kg",sets:3,reps:"8",tempo:"2-0-1",rir:"2",rest:"90 s rest after each pair",
    target:0,bwPlus:true,pair:"B1",
    c:"Neutral grip here deliberately — less anterior shoulder stress than supinated.",
-   spec:"Bodyweight this re-entry week, then +5 kg next week. Log the added weight (0 at bodyweight), not total."}
+   spec:"3×8 at RIR ≥2 → add 2.5 kg. Log the added weight (0 at bodyweight), not total."}
 ]},
 C:{name:"Session C",tag:"RDL · Incline ⟋ Pull · Leg press ⟋ Row · ~44 min",ex:[
   {n:"Romanian Deadlift",d:"from rack at hip height · no touch-down",sets:3,reps:"8",tempo:"3-0-1",rir:"4",rest:"2 min",
    target:100,axial:true,hinge:true,wu:true,
    c:"Capped at RIR 4, not 2. It is an accessory — taken close to failure at long muscle length it produces delayed soreness that lands on Session B's deadlift.",
-   spec:"Re-entry at 100, then 110 next week. Same load across all three sets — no jumping mid-session. Set up out of the rack, not off the floor. Knee angle fixed near 15–20°, all travel from the hip. Stop where the pelvis stops rotating. No touch-down between reps."},
+   spec:"All sets RIR ≥4 → +5 kg."},
   {n:"Incline DB Press",d:"per hand",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"90 s rest after each pair",
-   target:44,pair:"C1"},
+   target:46,inc:2,pair:"C1",
+   spec:"All sets RIR ≥3 → +2 kg per hand."},
   {n:"Pull-ups",d:"pronated · bodyweight · shoulder width",sets:3,reps:"10",tempo:"2-0-1",rir:"1–2",rest:"90 s rest after each pair",
    pair:"C1",
-   spec:"Bodyweight this block. Adding weight to chin-ups and pull-ups in the same block doubles the new stimulus on the same tissue in a shoulder with SLAP history. The chin-up gets loaded first. Grip at shoulder width, not wide."},
+   spec:"Bodyweight this block; all sets 10 reps at RIR ≥2 → add load next block."},
   {n:"Leg Press or Hack Squat",d:"depth capped at box-squat depth",sets:3,reps:"8",tempo:"3-1-3",rir:"3–4",rest:"2 min rest after each pair",
-   target:110,knee:true,tendon:true,pair:"C2",
-   spec:"Tendon exposure 3 of 3. Same working load and same rule as Session B. Paired with the barbell row: the row is done in the leg press rest, so knee-extensor rest stays at least 2 minutes."},
+   target:115,knee:true,tendon:true,pair:"C2",
+   spec:"All sets RIR ≥3 with the 3-1-3 tempo intact → +5 kg."},
   {n:"Barbell Row",d:"chest-supported if low back is fatigued from the RDL",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"2 min rest after each pair",
    target:70,pair:"C2",
-   spec:"Moved here from Session A, where a dumbbell row now takes its slot. Paired with the leg press — not with anything heavy and axial. 70 this week, 75 next. If the RDL has left the low back tired, switch to the chest-supported version rather than skipping it."}
+   spec:"All sets RIR ≥3 → +5 kg."}
 ]}
 };
+/* Some exercises carry an `alt` variant (e.g. OHP barbell ↔ dumbbells).
+   The chosen variant is per session-screen; its fields override the base. */
+var variantSel={};
+function exView(k,i){
+  var ex=PROG[k].ex[i];
+  if(ex.alt && variantSel[k+i]) return Object.assign({},ex,ex.alt,{alt:ex.alt,isAlt:true});
+  return ex;
+}
 /* Rest is counted after BOTH exercises in a pair are done — it is not the
    time allowed to complete the superset. */
 var PAIRLBL={A1:"Superset · do 1a then 1b · 90 s rest after each pair",
@@ -601,7 +620,9 @@ var PAIRLBL={A1:"Superset · do 1a then 1b · 90 s rest after each pair",
 function tempoFor(name){
   var t=null;
   ["A","B","C"].forEach(function(k){
-    PROG[k].ex.forEach(function(e){ if(!t && e.n===name) t=e.tempo||null; });
+    PROG[k].ex.forEach(function(e){
+      if(!t && (e.n===name || (e.alt && e.alt.n===name))) t=e.tempo||null;
+    });
   });
   return t;
 }
@@ -633,9 +654,35 @@ function lastDateFor(pred){
   DB.sessions.forEach(function(s){if(pred(s)&&(!d||s.date>d))d=s.date});
   return d;
 }
+/* Only knee-extensor isometrics count as a tendon exposure. KB circuit and
+   core entries are logged, but never feed the tendon tally. Old (pre-v7)
+   entries carry a single `mode` string instead of a `modes` array. */
+function isKneeMode(m){return /spanish|wall sit/i.test(m||"")}
+function isoModes(x){return x.modes||[x.mode]}
+function isKneeIso(x){return isoModes(x).some(isKneeMode)}
+
+/* one-line description of an iso entry, shared by history and export */
+function isoText(x,sep){
+  sep=sep||"  ·  ";
+  if(!x.modes){                      /* pre-v7 entry: print as before */
+    return x.mode+" "+x.sets+" × "+(x.hold||"?")+" s"+
+      (x.angle?sep+x.angle:"")+
+      (x.painDuring!==null&&x.painDuring!==undefined?sep+"pain during "+x.painDuring+"/10":"");
+  }
+  var knee=x.modes.filter(isKneeMode), other=x.modes.filter(function(m){return !isKneeMode(m)});
+  var parts=[];
+  if(knee.length){
+    parts.push(knee.join(" + ")+" "+x.sets+" × "+(x.hold||"?")+" s"+
+      (x.angle?sep+x.angle:"")+
+      (x.painDuring!==null&&x.painDuring!==undefined?sep+"pain during "+x.painDuring+"/10":""));
+  }
+  if(other.length) parts.push(other.join(" + ")+(x.minutes?" "+x.minutes+" min":""));
+  return parts.join(" + ");
+}
+
 function lastTendon(){
   var d=lastDateFor(function(s){return s.flags&&s.flags.tendon});
-  DB.iso.forEach(function(x){if(!d||x.date>d)d=x.date});
+  DB.iso.forEach(function(x){if(isKneeIso(x)&&(!d||x.date>d))d=x.date});
   return d;
 }
 function lastHinge(){return lastDateFor(function(s){return s.flags&&s.flags.hinge})}
@@ -682,12 +729,27 @@ function wirePickers(root){
     if(el.dataset.wired) return; el.dataset.wired="1";
     el.addEventListener("click",function(e){
       var b=e.target.closest("button[data-v]"); if(!b) return;
-      el.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});
-      b.setAttribute("aria-pressed","true");
-      el.dataset.val=b.dataset.v;
-      var k=el.dataset.k;
-      if(k in draftCheck) draftCheck[k]=parseInt(b.dataset.v,10);
-      if(k==="backstiff") draftBack=parseInt(b.dataset.v,10);
+      var k=el.dataset.k, wasOn=b.getAttribute("aria-pressed")==="true";
+      if(el.dataset.multi){
+        /* multi-select: each tap toggles that option only */
+        b.setAttribute("aria-pressed",String(!wasOn));
+        var on=[].slice.call(el.querySelectorAll('button[aria-pressed="true"]')).map(function(x){return x.dataset.v});
+        if(on.length) el.dataset.val=on.join("|"); else delete el.dataset.val;
+      } else {
+        /* single-select: tapping the selected option again clears it */
+        el.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});
+        if(wasOn){
+          delete el.dataset.val;
+          if(k in draftCheck) draftCheck[k]=null;
+          if(k==="backstiff") draftBack=null;
+        } else {
+          b.setAttribute("aria-pressed","true");
+          el.dataset.val=b.dataset.v;
+          if(k in draftCheck) draftCheck[k]=parseInt(b.dataset.v,10);
+          if(k==="backstiff") draftBack=parseInt(b.dataset.v,10);
+        }
+      }
+      if(k==="imode") updateIsoFields();
     });
   });
 }
@@ -822,7 +884,7 @@ function tierAdjust(target,ex){
   return {load:target,note:null};
 }
 
-function renderSession(){
+function renderSession(openIdx){
   document.querySelectorAll("#pickSession button").forEach(function(b){
     b.setAttribute("aria-pressed",String(b.dataset.s===curSession))});
   var p=PROG[curSession];
@@ -837,7 +899,8 @@ function renderSession(){
 
   if(t==="amber"||t==="red") html+='<div class="alert warn"><b>'+t+' morning — hold the load</b>Any load above the prescribed number is highlighted as you type, and saving will ask you to confirm. Hold or reduce; do not add.</div>';
 
-  p.ex.forEach(function(e,i){
+  p.ex.forEach(function(e0,i){
+    var e=exView(curSession,i);
     /* pair banding — each pair gets its own colour and 1a/1b tags */
     if(e.pair!==openPair){
       if(openPair) html+='</div>';
@@ -858,10 +921,15 @@ function renderSession(){
     var tgtHTML="";
     if(e.target){
       var lbl = e.hold ? "hold "+adj.load+" kg"
-              : "target "+adj.load+(e.bwPlus?" kg added":" kg");
+              : "target "+adj.load+(e.bwPlus?" kg added":" kg")+(e.inc?" per hand":"");
       var cls = e.hold?"hold":"up";
       tgtHTML='<span class="tgt '+cls+'">'+lbl+(adj.note?" · "+adj.note:"")+'</span>';
+    } else if(e.bwPlus){
+      tgtHTML='<span class="tgt up">target bodyweight × '+e.reps+'</span>';
     }
+    var varHTML = e.alt ? '<div class="seg" style="margin-top:11px">'+
+        '<button data-vv="0" data-ve="'+i+'" aria-pressed="'+String(!e.isAlt)+'">Barbell</button>'+
+        '<button data-vv="1" data-ve="'+i+'" aria-pressed="'+String(!!e.isAlt)+'">Dumbbells</button></div>' : "";
 
     var rows="";
     for(var s=1;s<=e.sets;s++){
@@ -878,9 +946,9 @@ function renderSession(){
                    " · "+e.rest+
                    (e.d?" · "+e.d:"");
 
-    html+='<details class="ex"'+(i===0?" open":"")+'>'+
+    html+='<details class="ex" data-ex="'+i+'"'+((openIdx===undefined?i===0:openIdx.indexOf(i)>=0)?" open":"")+'>'+
       '<summary><div><div class="nm">'+pairTag+e.n+'</div><div class="sub">'+specLine+'<br>'+tgtHTML+'</div></div><div class="chev">›</div></summary>'+
-      '<div class="exbody">'+
+      '<div class="exbody">'+varHTML+
         '<div class="sethead"><span></span><span>Load</span><span>Reps</span><span>RIR</span></div>'+
         rows+
         '<button class="btn slim" data-copy="'+i+'" style="margin-top:8px">Copy set 1 down</button>'+
@@ -915,6 +983,26 @@ document.getElementById("pickSession").addEventListener("click",function(e){
 });
 
 document.getElementById("sessionBody").addEventListener("click",function(e){
+  var vb=e.target.closest("[data-vv]");
+  if(vb){
+    var vi=parseInt(vb.dataset.ve,10), want=vb.dataset.vv==="1";
+    if(!!variantSel[curSession+vi]===want) return;
+    /* keep everything already typed, and keep open panels open */
+    var keep={}, open=[];
+    document.querySelectorAll("#sessionBody input[data-f]").forEach(function(el){
+      keep[el.dataset.f+"|"+el.dataset.e+"|"+el.dataset.s]=el.value});
+    document.querySelectorAll("#sessionBody details[data-ex]").forEach(function(d){
+      if(d.open) open.push(parseInt(d.dataset.ex,10))});
+    var nt=document.getElementById("sessNote"), note=nt?nt.value:"";
+    variantSel[curSession+vi]=want;
+    /* loads typed for the other variant mean nothing here — clear that exercise */
+    Object.keys(keep).forEach(function(k){ if(k.split("|")[1]===String(vi)) delete keep[k]; });
+    renderSession(open);
+    document.querySelectorAll("#sessionBody input[data-f]").forEach(function(el){
+      var k=el.dataset.f+"|"+el.dataset.e+"|"+el.dataset.s; if(k in keep){el.value=keep[k]; markOver(el);} });
+    nt=document.getElementById("sessNote"); if(nt) nt.value=note;
+    return;
+  }
   var tk=e.target.closest("[data-tick]");
   if(tk){ tk.setAttribute("aria-pressed",tk.getAttribute("aria-pressed")==="true"?"false":"true"); return; }
   var cp=e.target.closest("[data-copy]");
@@ -944,7 +1032,7 @@ function aboveTarget(ex,raw){
 }
 function markOver(el){
   if(el.dataset.f!=="load") return;
-  var ex=PROG[curSession].ex[parseInt(el.dataset.e,10)];
+  var ex=exView(curSession,parseInt(el.dataset.e,10));
   el.classList.toggle("over",guardActive()&&aboveTarget(ex,el.value));
 }
 
@@ -960,8 +1048,8 @@ document.getElementById("sessionBody").addEventListener("click",function(e){
   if(!e.target.closest("#saveSession")) return;
   var p=PROG[curSession], exs=[], bad=false, flags={tendon:false,hinge:false,axial:false}, over=[];
   document.querySelectorAll("input.miss").forEach(function(el){el.classList.remove("miss")});
-  p.ex.forEach(function(ex,i){
-    var sets=[];
+  p.ex.forEach(function(ex0,i){
+    var ex=exView(curSession,i), sets=[];
     for(var s=1;s<=ex.sets;s++){
       var q=function(f){return document.querySelector('input[data-f="'+f+'"][data-e="'+i+'"][data-s="'+s+'"]')};
       var L=q("load"),R=q("reps"),I=q("rir");
@@ -1020,15 +1108,44 @@ document.getElementById("saveCardio").addEventListener("click",function(){
   toast(msg); go("today");
 });
 
+function selectedIsoModes(){var v=segVal("imode");return v?v.split("|"):[]}
+function updateIsoFields(){
+  var m=selectedIsoModes();
+  var knee=m.some(isKneeMode), other=m.some(function(x){return !isKneeMode(x)});
+  /* knee fields stay visible until a non-knee-only selection is made */
+  document.getElementById("isoKnee").style.display=(knee||!m.length)?"block":"none";
+  document.getElementById("isoMinWrap").style.display=other?"block":"none";
+}
+
 document.getElementById("saveIso").addEventListener("click",function(){
-  var s=parseInt(document.getElementById("iSets").value,10);
-  if(!s){toast("Sets?");return}
-  DB.iso.push({date:today(),mode:segVal("imode")||"Isometrics",sets:s,
-    hold:parseInt(document.getElementById("iHold").value,10)||null,
-    angle:segVal("iang")||null,
-    painDuring:scaleVal("ipain")});
+  var modes=selectedIsoModes();
+  if(!modes.length){toast("Select what you did");return}
+  var knee=modes.some(isKneeMode), other=modes.some(function(x){return !isKneeMode(x)});
+  var rec={date:today(),modes:modes,mode:modes.join(" + ")};
+  var s=null;
+  if(knee){
+    s=parseInt(document.getElementById("iSets").value,10);
+    if(!s){toast("Sets?");return}
+    rec.sets=s;
+    rec.hold=parseInt(document.getElementById("iHold").value,10)||null;
+    rec.angle=segVal("iang")||null;
+    rec.painDuring=scaleVal("ipain");
+  }
+  if(other){
+    var mn=parseInt(document.getElementById("iMin").value,10);
+    if(mn) rec.minutes=mn;
+  }
+  DB.iso.push(rec);
   DB.iso.sort(function(a,b){return a.date<b.date?-1:1});
-  save(); renderAll(); toast(s<5?"Saved — 5 sets is the dose":"Isometrics saved"); go("today");
+  /* clear the form so the next entry starts from nothing selected */
+  ["imode","iang","ipain"].forEach(function(k){
+    var el=document.querySelector('[data-k="'+k+'"]'); if(!el) return;
+    el.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});
+    delete el.dataset.val;
+  });
+  ["iSets","iHold","iMin"].forEach(function(id){document.getElementById(id).value=""});
+  updateIsoFields();
+  save(); renderAll(); toast(knee&&s<5?"Saved — 5 sets is the dose":"Saved"); go("today");
 });
 
 document.getElementById("saveVitals").addEventListener("click",function(){
@@ -1073,7 +1190,7 @@ function renderHist(){
     dod>=28 ? "Last 28 days" : "Last "+win+" day"+(win===1?"":"s")+" — all the data there is";
 
   var s=within(DB.sessions,win), c=within(DB.cardio,win), i=isoCount(win), ch=within(DB.checks,win);
-  var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).length;
+  var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).filter(isKneeIso).length;
 
   function line(lbl,n,per,target){
     return '<div class="spread"><span class="muted">'+lbl+'</span><span class="mono"><b>'+n+'</b> · '+
@@ -1124,9 +1241,8 @@ function renderHist(){
     (x.hrMax?" · peak "+x.hrMax:"")+(x.talk==="no"?" · above bracket":"")})});
   DB.iso.forEach(function(x){
     var nx=checkOn(shift(x.date,1));
-    all.push({d:x.date,t:"Isometrics",s:x.mode+" · "+x.sets+"×"+(x.hold||"?")+"s"+
-      (x.angle?" · "+x.angle:"")+(x.painDuring!==null&&x.painDuring!==undefined?" · pain "+x.painDuring+"/10":"")+
-      (nx?" · next AM decline "+nx.decline:"")})});
+    all.push({d:x.date,t:"Isometrics",s:esc(isoText(x," · "))+
+      (nx&&isKneeIso(x)?" · next AM decline "+nx.decline:"")})});
   DB.weight.forEach(function(x){all.push({d:x.date,t:"Weight",s:x.kg.toFixed(1)+" kg"+(x.bf?" · "+x.bf+"% bf":"")})});
   DB.vitals.forEach(function(x){all.push({d:x.date,t:"Vitals",s:"RHR "+x.rhr+(x.hrv?" · HRV "+x.hrv:"")+(x.status?" · "+x.status:"")})});
   DB.checks.forEach(function(x){all.push({d:x.date,t:"Check",s:tierOf(x)+" · stairs "+x.stairs+" · decline "+x.decline+
@@ -1147,7 +1263,7 @@ function textExport(){
   if(DB.blockStart) L.push("Block week: "+(Math.floor(daysBetween(DB.blockStart,today())/7)+1));
   L.push("");
   var s=within(DB.sessions,win), c=within(DB.cardio,win), i=isoCount(win);
-  var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).length;
+  var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).filter(isKneeIso).length;
   L.push("FREQUENCY");
   L.push("  Barbell:    "+s.length+"  ("+(s.length/weeks).toFixed(1)+"/wk, target 3)");
   L.push("  Tendon:     "+tend+"  ("+(tend/weeks).toFixed(1)+"/wk, target 3)");
@@ -1215,10 +1331,8 @@ function textExport(){
   if(!DB.iso.length) L.push("  (none)");
   DB.iso.forEach(function(x){
     var nx=checkOn(shift(x.date,1));
-    L.push("  "+x.date+": "+x.mode+" "+x.sets+" × "+(x.hold||"?")+" s"+
-      (x.angle?"  ·  "+x.angle:"")+
-      (x.painDuring!==null&&x.painDuring!==undefined?"  ·  pain during "+x.painDuring+"/10":"")+
-      (nx?"  ·  next AM decline "+nx.decline+"/5":"  ·  next AM not logged"));
+    L.push("  "+x.date+": "+isoText(x)+
+      (!isKneeIso(x)?"":(nx?"  ·  next AM decline "+nx.decline+"/5":"  ·  next AM not logged")));
   });
   L.push("");
 
@@ -1228,6 +1342,8 @@ function textExport(){
     PROG[k].ex.forEach(function(e){
       L.push("    "+e.n+": "+e.sets+"×"+e.reps+" · "+(e.tempo||"—")+" · RIR "+e.rir+" · "+e.rest+
         (e.target?" · "+e.target+" kg"+(e.bwPlus?" added":""):(e.bwPlus?" · bodyweight":"")));
+      if(e.alt) L.push("      or "+e.alt.n+": "+e.sets+"×"+(e.alt.reps||e.reps)+" · "+(e.tempo||"—")+" · RIR "+e.rir+" · "+e.rest+
+        (e.alt.target?" · "+e.alt.target+" kg":""));
     });
   });
   return L.join("\n");
@@ -1277,15 +1393,16 @@ function renderData(){
   var rules=[
     ["Reading a spec line","Every exercise now reads in the same fixed order: sets × reps · tempo · RIR · rest. Tempo is eccentric–pause–concentric in seconds, so 3-1-3 is three down, one paused, three up. If a line has no tempo it is a bug, not a licence to move fast."],
     ["Tendon work (box squat, leg press)","Hold reps and tempo constant. Add load only when every set hits the target RIR with the tempo intact. The 3 s eccentric degrades before RIR does — if it shortens, the load is wrong whatever the number says. Over twelve weeks the intent is to migrate from roughly 12–15RM toward 6–8RM."],
-    ["Leg press specifically","The two-week RIR 5 introduction is finished. Working load is the one that gives 8 reps at RIR 3–4 with the 3-1-3 tempo intact — roughly 110 kg based on your 95 kg @ RIR 6. Add 5 kg when all three sets come in at RIR 4 or higher. Record which machine: sled angle and loading type make the same number mean different things between gyms."],
-    ["Deadlift","Load moves when all three sets hit RIR 3 with bar speed maintained. Lower over 1–2 s to a dead stop. Next-morning lower-back stiffness over 30 minutes means the last jump was too big."],
-    ["RDL","Capped at RIR 4. Re-entry at 100 kg, then 110 kg. Same load across all sets. If you want more from it, lengthen the eccentric before you add load."],
-    ["Bench press","Add 2.5 kg only when all four sets land at RIR 2 or more. If a set hits RIR 1 or less, drop 5 kg for the remaining sets. Repeated RIR 0 on sets 3–4 is the sign the 90 s pair rest is too short."],
+    ["Leg press specifically","Working load gives 8 reps at RIR 3–4 with the 3-1-3 tempo intact. All sets RIR ≥3 → +5 kg."],
+    ["Deadlift","All sets RIR ≥3 with bar speed held → +5 kg. Lower over 1–2 s to a dead stop. Next-morning lower-back stiffness over 30 minutes means the last jump was too big."],
+    ["RDL","Capped at RIR 4. Same load across all sets. All sets RIR ≥4 → +5 kg."],
+    ["Bench press","All sets RIR ≥2 → +2.5 kg. Any set at RIR 1 or less → hold."],
     ["Warm-up ramp","Three sets — 50% × 5, 70% × 3, 85% × 1 — calculated from the working load and rounded to 2.5 kg. Only on the barbell lifts. Normal tempo; the slow tempo is for working sets."],
-    ["Overhead press","Three sets, not four. Slowest progression in the programme, and deliberately so — repaired labrum, and it is the lift sitting closest to failure. 2.5 kg steps only."],
-    ["Pull-ups vs chin-ups","The chin-up is the loaded vertical pull: bodyweight in the re-entry week, +5 kg after. Pull-ups stay at bodyweight this block — loading both in the same block doubles new stimulus on the same shoulder."],
+    ["Overhead press","Three sets. Barbell: all sets RIR ≥3 → +5 kg back to 70 kg, then 2.5 kg steps. Dumbbells (when there is no room for the bar): 3×8, all sets RIR ≥3 → +2 kg per hand. Pick the variant with the toggle on the Lift screen; it is logged under its own name."],
+    ["Pull-ups vs chin-ups","The chin-up is the loaded vertical pull: 3×8 at RIR ≥2 → add 2.5 kg. Pull-ups stay at bodyweight this block — loading both in the same block doubles new stimulus on the same shoulder."],
+    ["Dumbbell steps","Dumbbells go up in 2 kg steps per hand (DB row, incline DB press, DB overhead press). Barbell lifts use 2.5 or 5 kg."],
     ["Supersets","Do the a-exercise, then the b-exercise, then rest. The rest time on the label is counted after the pair, not the time allowed to finish it. Pairs are colour-coded on the Lift screen."],
-    ["Axial spacing","Minimum 48 h between squat day and deadlift day. Sessions A and B never share a day and never sit on consecutive days. This was broken on 2–3 Sep and the OHP drift the following week is what that looks like in the data."],
+    ["Axial spacing","Minimum 48 h between squat day and deadlift day. Sessions A and B never share a day and never sit on consecutive days."],
     ["Amber days","Hold the load, or cut a set. Do not add weight on an amber morning — that is the entire function of the gate. On amber and red days any load above the prescribed number turns amber as you type, saving asks for confirmation, and the session is flagged in the export."],
     ["Pain rules","Pain up to 3–4/10 during tendon sets is acceptable and expected. The signal that matters is the next morning: if stairs or decline are worse 24 h later, the load was too much."],
     ["Joint-line pain","Different signal from tendon pain. Patellar tendinopathy gives inferior-pole pain, not joint-line pain. After bilateral meniscectomy, joint-line tenderness is common and non-specific — it can reflect remnant meniscal tissue, early compartment change, or simple load irritation, and this app cannot tell you which. Persistent joint-line pain, mechanical catching or locking, or a visible effusion warrants an orthopaedic opinion rather than more load management."],
@@ -1302,14 +1419,15 @@ function renderData(){
     ["Isometrics","5 × 45 s at an effort you could hold for about 60 s, roughly 2 min between. Often gives 30–45 min of reduced pain afterwards, which makes it useful immediately before squatting. Be clear about the evidence: the early work reporting immediate analgesia has not been consistently reproduced, and later trials and reviews do not show isometrics beating isotonic loading for pain. They are programmed here as a low-irritability way to keep tendon exposure on night-shift and off days, not because the analgesic claim is settled."],
     ["Deadlift","Straight sets, full rest, never supersetted. 1-0-1: concentric from a dead stop, lower over 1–2 s. No pre-tension, no stretch reflex, which is why it trains starting strength and why it is neurally expensive."],
     ["RDL","3-0-1. Eccentric-first within each rep, from the top, out of the rack. Knee angle fixed near 15–20°; all bar travel from the hip. Stop where the pelvis stops rotating. No touch-down between reps. Not a tendon exposure — knee extensor moment is near zero."],
-    ["Overhead press","2-0-1, in front of the face only. Nothing behind the neck with a repaired labrum."],
-    ["Chin-ups","Neutral grip in B — less anterior shoulder load than supinated. This is the loaded one: +5 kg."],
+    ["Overhead press","2-0-1, in front of the face only. Nothing behind the neck with a repaired labrum. Barbell by default; standing dumbbells when there is no room for the bar."],
+    ["Chin-ups","Neutral grip in B — less anterior shoulder load than supinated. This is the loaded vertical pull."],
     ["Pull-ups","Pronated in C, shoulder-width, bodyweight this block."],
     ["Barbell row","Now in Session C, paired with the leg press — done in the leg press rest, so it costs little time. Chest-supported if the RDL has tired the low back. Session A keeps a dumbbell row in the bench superset."],
     ["DB row","Session A, paired with the bench. One arm at a time, bench-supported, per-hand weight logged. Chosen for logistics: no second barbell station needed during the superset."],
     ["Cycling","Target "+z.baseLo+"–"+z.baseHi+" bpm, ceiling "+z.cap+". 95–105 rpm at low resistance, seated. Tendon and patellofemoral force follow pedal force, so spin light rather than grind. 40–45 min, twice weekly. If the talk test fails, drop the resistance and keep the cadence — the cadence is what protects the knee."],
     ["Stair climber","Counts as a knee-extensor exposure, not as free cardio. Repeated step-up loading at a shallow-to-moderate knee angle is real patellar tendon work. Useful, but put it on a non-squat day and keep it short while symptoms are live."],
     ["Heart rate zones","All zone numbers here come from percentages of heart-rate reserve using an age-estimated max of "+z.max+" bpm (208 − 0.7 × age). That estimate has a standard deviation of roughly 7–11 bpm between individuals, so an individual's true zones can sit a full bracket away. The talk test is the cheaper and more reliable anchor: if full sentences are not possible, you are above the bracket regardless of the watch."],
+    ["Core","Optional — not a programme pillar. A short menu chosen around the knees, shoulder and back:<br>• <b>Anti-extension:</b> dead bug; ab-wheel rollout from the knees on a pad, only if kneeling is comfortable.<br>• <b>Anti-rotation:</b> Pallof press.<br>• <b>Anti-lateral flexion:</b> side plank; suitcase carry.<br>• <b>Back:</b> bird dog.<br>Evidence: these are widely recommended, but the support is mainly biomechanical — spine-loading and muscle-activation studies, much of it from McGill's group. Evidence that core training reduces injury or improves lifting performance in trained lifters is limited, and heavy compound lifts already load the trunk substantially. Logging core does not count as a tendon exposure."],
     ["Indian clubs","10 kg only, front of body. Behind-the-head patterns need a conversation first."]
   ];
   document.getElementById("specs").innerHTML=specs.map(function(s){
