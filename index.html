@@ -170,7 +170,30 @@ pre.out{font-family:var(--mono);font-size:11px;line-height:1.5;white-space:pre-w
 .hrband .k{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
 .hrband .v{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
 
-nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);
+/* mobility drill rows */
+.mrow{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
+.mrow:last-child{border-bottom:0}
+.mrow .tick{width:26px;height:26px;flex:none;border:1px solid var(--line);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;margin-top:1px}
+.mrow[aria-pressed="true"] .tick{background:var(--tier);border-color:var(--tier);color:#0E1116}
+.mrow[aria-pressed="true"] .mn{color:var(--ink-3);text-decoration:line-through}
+.mrow .mn{font-weight:600;font-size:14.5px}
+.mrow .md{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.mrow .mm{font-size:12px;color:var(--amber);margin-top:4px;line-height:1.45}
+
+/* coach review */
+.lrow{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.lrow:last-child{border-bottom:0}
+.lrow .ln{font-weight:600;font-size:14.5px}
+.lrow .ll{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.lrow .lr{font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.45}
+.lrow .lx{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap}
+.lrow .lx.up{color:var(--green)} .lrow .lx.dn{color:var(--amber)} .lrow .lx.blk{color:var(--red)}
+.syncline{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em}
+.syncline.bad{color:var(--red)}
+.navdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:3px;vertical-align:2px}
+
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:grid;grid-template-columns:repeat(6,1fr);
   background:rgba(21,24,29,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line-soft);
   padding-bottom:env(safe-area-inset-bottom)}
 nav button{padding:11px 2px 12px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
@@ -262,7 +285,7 @@ nav button[aria-current="true"]{color:var(--tier)}
 <section class="view" id="v-lift"><div class="wrap">
   <div class="eyebrow">Session</div>
   <div class="seg" id="pickSession" style="margin-bottom:6px">
-    <button data-s="A">A</button><button data-s="B">B</button><button data-s="C">C</button>
+    <button data-s="A">A</button><button data-s="B">B</button><button data-s="C">C</button><button data-s="M">Mobility</button>
   </div>
   <p class="tiny" id="sessionTag" style="margin:0 0 12px"></p>
   <div id="spaceWarn"></div>
@@ -367,6 +390,11 @@ nav button[aria-current="true"]{color:var(--tier)}
 
 </div></section>
 
+<!-- ══════════ COACH ══════════ -->
+<section class="view" id="v-coach"><div class="wrap">
+  <div id="coachBody"></div>
+</div></section>
+
 <!-- ══════════ HISTORY ══════════ -->
 <section class="view" id="v-hist"><div class="wrap">
   <div class="card">
@@ -407,6 +435,20 @@ nav button[aria-current="true"]{color:var(--tier)}
     <button class="btn" id="btnImport">Restore from JSON</button>
   </div>
 
+  <div class="card" id="syncCard">
+    <div class="eyebrow">Sync — private GitHub repo</div>
+    <p class="muted" style="margin:0 0 10px">Uploads the full log to a <b>private</b> repo each time you save, and pulls the weekly review into the Coach tab. Sync runs while the app is open — iOS does not allow it in the background.</p>
+    <div class="field"><label>Private repo (owner/name)</label><input id="syRepo" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Boer08/training-ledger-data"></div>
+    <div class="field"><label>Access token (fine-grained, this repo only)</label><input id="syTok" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="github_pat_…"></div>
+    <button class="btn go" id="btnSyncSave" style="margin-bottom:8px">Save &amp; test connection</button>
+    <div class="seg" style="margin-bottom:10px">
+      <button class="btn slim" id="btnSyncNow">Sync now</button>
+      <button class="btn slim" id="btnSyncOff">Disconnect</button>
+    </div>
+    <div class="syncline" id="syncStatusData"></div>
+    <div class="specline">The token is stored on this phone only, under its own key. It is never written into the JSON backup, the text export or the uploaded log. If the phone is lost, revoke the token on GitHub.</div>
+  </div>
+
   <div class="card">
     <div class="eyebrow">Progression rules</div>
     <div id="rules"></div>
@@ -422,6 +464,7 @@ nav button[aria-current="true"]{color:var(--tier)}
   <button data-v="today" aria-current="true"><span class="g">●</span>Today</button>
   <button data-v="lift"><span class="g">▮</span>Lift</button>
   <button data-v="cardio"><span class="g">◠</span>Cardio+</button>
+  <button data-v="coach"><span class="g">✦</span><span>Coach<i class="navdot" id="coachDot" style="display:none"></i></span></button>
   <button data-v="hist"><span class="g">≡</span>History</button>
   <button data-v="data"><span class="g">⇄</span>Data</button>
 </nav>
@@ -440,7 +483,9 @@ function canStore(){try{localStorage.setItem("__t","1");localStorage.removeItem(
 memOnly=!canStore();
 if(memOnly) document.getElementById("storeWarn").style.display="block";
 
-var BLANK={version:7,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
+var BLANK={version:8,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
+           mobility:[],targets:{},
+           coach:{review:null,fetchedAt:null,seenId:null,acceptedId:null,acceptedOn:null,prevTargets:null},
            blockStart:null,lastExport:null};
 
 /* Re-entry block after the September holiday gap. Applied once, by the
@@ -453,9 +498,22 @@ function migrate(o){
   /* v5 → v6: sessions may carry a free-text `note` and an `amberOver` flag
      (both optional, absent on old rows). The block counter is reset once. */
   if(fromVersion!==null && fromVersion<6) o.blockStart=REENTRY_BLOCK_START;
-  ["checks","sessions","cardio","iso","weight","vitals"].forEach(function(k){
+  ["checks","sessions","cardio","iso","weight","vitals","mobility"].forEach(function(k){
     if(!Array.isArray(o[k])) o[k]=[];
   });
+  /* v7 → v8: three new containers, all empty on old data.
+       mobility — [{date,routine:"post"|"full",done,total}]
+       targets  — {exerciseName:kg} load overrides accepted from a coach
+                  review; anything absent falls back to the PROG default
+       coach    — cached weekly review plus acceptance bookkeeping
+     The sync settings (repo + token) are NOT part of this object — they
+     live under their own storage key so they never reach a backup. */
+  if(!o.targets||typeof o.targets!=="object"||Array.isArray(o.targets)) o.targets={};
+  if(!o.coach||typeof o.coach!=="object") o.coach={};
+  o.coach=Object.assign({review:null,fetchedAt:null,seenId:null,acceptedId:null,acceptedOn:null,prevTargets:null},o.coach);
+  /* overrides accepted under an older programme version are dropped, so a
+     new app version's prescribed loads are never masked by stale ones */
+  if(fromVersion!==null && fromVersion<8){ o.targets={}; o.coach.prevTargets=null; }
   /* v2 sessions have no flags — infer them from the session letter so the
      staleness strip and frequency counts still work on old data. */
   o.sessions.forEach(function(s){
@@ -469,7 +527,7 @@ function migrate(o){
      old `rpe` field is left in place and still printed if present. */
   /* v6 → v7: iso entries may carry a `modes` array (multi-select) and an
      optional `minutes`. Old rows keep their single `mode` string untouched. */
-  o.version=7;
+  o.version=8;
   return o;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){
@@ -479,7 +537,11 @@ function load(){
   try{var r=localStorage.getItem(KEY);return migrate(r?JSON.parse(r):null)}
   catch(e){return migrate(null)}
 }
-function save(){ if(memOnly){mem=DB;return} try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast("Could not save")} }
+/* saveLocal writes to the phone only. save() also marks the log as changed
+   and queues an upload — use saveLocal for writes that must not trigger a
+   sync (e.g. caching a review that was just downloaded). */
+function saveLocal(){ if(memOnly){mem=DB;return} try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast("Could not save")} }
+function save(){ saveLocal(); if(typeof markDirty==="function") markDirty(); }
 var DB=load();
 
 /* ═══════════ dates ═══════════ */
@@ -497,7 +559,7 @@ function toast(m){var t=document.getElementById("toast");t.textContent=m;t.class
 /* first date across every record type — the honest denominator */
 function firstDate(){
   var d=null;
-  [DB.sessions,DB.cardio,DB.iso,DB.checks,DB.weight,DB.vitals].forEach(function(a){
+  [DB.sessions,DB.cardio,DB.iso,DB.checks,DB.weight,DB.vitals,DB.mobility].forEach(function(a){
     a.forEach(function(x){if(!d||x.date<d)d=x.date});
   });
   return d;
@@ -550,16 +612,16 @@ function renderHR(){
    `target` is the prescribed load for this week. `hold` means do not add
    load this week even if it feels easy. */
 var PROG={
-A:{name:"Session A",tag:"Squat · Bench ⟋ DB Row · ~42 min",ex:[
+A:{name:"Session A",tag:"Squat · Bench ⟋ DB Row · ~45 min",ex:[
   {n:"Box Squat",d:"high bar · parallel box",sets:4,reps:"6",tempo:"3-1-3",rir:"3–4",rest:"3 min",
-   target:145,axial:true,knee:true,tendon:true,wu:true,
+   target:150,axial:true,knee:true,tendon:true,wu:true,
    c:"Parallel box is the permanent default, not a stage you graduate from. With meniscal tissue removed on both sides, deep loaded flexion concentrates contact pressure over less cartilage.",
    spec:"All sets RIR ≥3 with the 3-1-3 tempo intact on a green morning → +5 kg; any set RIR ≤2, or an amber morning → hold."},
-  {n:"Bench Press",d:"straight sets — no intra-session jumps",sets:4,reps:"5",tempo:"2-0-1",rir:"2–3",rest:"90 s rest after each pair",
+  {n:"Bench Press",d:"straight sets — no intra-session jumps",sets:4,reps:"5",tempo:"2-0-1",rir:"2–3",rest:"2–2.5 min rest after each pair",
    target:115,pair:"A1",wu:true,
    c:"Keep the grip inside the widest setting and the elbows tucked to roughly 45°. Wide grip plus low elbows is the position that stresses a repaired labrum.",
-   spec:"All sets RIR ≥2 → +2.5 kg; any set at RIR 1 or less → hold."},
-  {n:"DB Row",d:"per hand · one arm at a time, bench-supported",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"90 s rest after each pair",
+   spec:"All sets RIR ≥2 → +2.5 kg; any set at RIR 1 or less → hold. Rest 2–2.5 min after each bench/row pair."},
+  {n:"DB Row",d:"per hand · one arm at a time, bench-supported",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"2–2.5 min rest after each pair",
    target:50,inc:2,pair:"A1",
    spec:"All sets RIR ≥3 → +2 kg per hand."}
 ]},
@@ -569,22 +631,22 @@ B:{name:"Session B",tag:"Deadlift · Leg press · OHP ⟋ Chin · ~42 min",ex:[
    c:"Never supersetted. Full rest, and stop the set the moment bar speed drops rather than grinding a rep out.",
    spec:"All sets RIR ≥3 with bar speed held → +5 kg."},
   {n:"Leg Press",d:"depth capped at box-squat depth",sets:3,reps:"8",tempo:"3-1-3",rir:"3–4",rest:"2 min",
-   target:115,knee:true,tendon:true,
+   target:122.5,knee:true,tendon:true,
    spec:"All sets RIR ≥3 with the 3-1-3 tempo intact → +5 kg."},
   {n:"Overhead Press",d:"standing barbell",sets:3,reps:"6",tempo:"2-0-1",rir:"2–3",rest:"90 s rest after each pair",
    target:65,pair:"B1",wu:true,
    c:"Bar path in front of the face, finishing overhead. Nothing behind the neck.",
    spec:"All sets RIR ≥3 → +5 kg back to 70 kg, then +2.5 kg steps.",
-   alt:{n:"Overhead Press (DB)",d:"standing dumbbells · per hand",reps:"8",target:40,inc:2,wu:false,
+   alt:{n:"Overhead Press (DB)",d:"standing dumbbells · per hand",reps:"8",target:42,inc:2,wu:false,
         spec:"All sets RIR ≥3 → +2 kg per hand."}},
   {n:"Weighted Chin-up",d:"neutral grip · added kg",sets:3,reps:"8",tempo:"2-0-1",rir:"2",rest:"90 s rest after each pair",
    target:0,bwPlus:true,pair:"B1",
    c:"Neutral grip here deliberately — less anterior shoulder stress than supinated.",
-   spec:"3×8 at RIR ≥2 → add 2.5 kg. Log the added weight (0 at bodyweight), not total."}
+   spec:"3×8 at RIR ≥2 → add 2.5 kg, only if elbow pain is ≤3/10 during the session and the next morning. Log the added weight (0 at bodyweight), not total."}
 ]},
 C:{name:"Session C",tag:"RDL · Incline ⟋ Pull · Leg press ⟋ Row · ~44 min",ex:[
   {n:"Romanian Deadlift",d:"from rack at hip height · no touch-down",sets:3,reps:"8",tempo:"3-0-1",rir:"4",rest:"2 min",
-   target:100,axial:true,hinge:true,wu:true,
+   target:110,axial:true,hinge:true,wu:true,
    c:"Capped at RIR 4, not 2. It is an accessory — taken close to failure at long muscle length it produces delayed soreness that lands on Session B's deadlift.",
    spec:"All sets RIR ≥4 → +5 kg."},
   {n:"Incline DB Press",d:"per hand",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"90 s rest after each pair",
@@ -594,24 +656,47 @@ C:{name:"Session C",tag:"RDL · Incline ⟋ Pull · Leg press ⟋ Row · ~44 min
    pair:"C1",
    spec:"Bodyweight this block; all sets 10 reps at RIR ≥2 → add load next block."},
   {n:"Leg Press or Hack Squat",d:"depth capped at box-squat depth",sets:3,reps:"8",tempo:"3-1-3",rir:"3–4",rest:"2 min rest after each pair",
-   target:115,knee:true,tendon:true,pair:"C2",
+   target:122.5,knee:true,tendon:true,pair:"C2",
    spec:"All sets RIR ≥3 with the 3-1-3 tempo intact → +5 kg."},
   {n:"Barbell Row",d:"chest-supported if low back is fatigued from the RDL",sets:3,reps:"8",tempo:"2-0-1",rir:"3",rest:"2 min rest after each pair",
-   target:70,pair:"C2",
+   target:75,pair:"C2",
    spec:"All sets RIR ≥3 → +5 kg."}
 ]}
 };
 /* Some exercises carry an `alt` variant (e.g. OHP barbell ↔ dumbbells).
    The chosen variant is per session-screen; its fields override the base. */
 var variantSel={};
+/* A load accepted from a coach review is stored in DB.targets under the
+   exercise name and overrides the PROG default. Only exercises that
+   already carry a numeric target can be overridden. */
+function effTarget(name,dflt){
+  var o=DB.targets?DB.targets[name]:undefined;
+  return (typeof o==="number"&&isFinite(o))?o:dflt;
+}
+function withTarget(e){
+  if(typeof e.target!=="number") return e;
+  var t=effTarget(e.n,e.target);
+  return t===e.target?e:Object.assign({},e,{target:t});
+}
 function exView(k,i){
   var ex=PROG[k].ex[i];
-  if(ex.alt && variantSel[k+i]) return Object.assign({},ex,ex.alt,{alt:ex.alt,isAlt:true});
-  return ex;
+  if(ex.alt && variantSel[k+i]) return withTarget(Object.assign({},ex,ex.alt,{alt:ex.alt,isAlt:true}));
+  return withTarget(ex);
+}
+/* every exercise that has a prescribed load, with its current target */
+function targetIndex(){
+  var m={};
+  ["A","B","C"].forEach(function(k){
+    PROG[k].ex.forEach(function(e){
+      if(typeof e.target==="number") m[e.n]={dflt:e.target,cur:effTarget(e.n,e.target),bwPlus:!!e.bwPlus,inc:e.inc||null};
+      if(e.alt&&typeof e.alt.target==="number") m[e.alt.n]={dflt:e.alt.target,cur:effTarget(e.alt.n,e.alt.target),bwPlus:false,inc:e.alt.inc||null};
+    });
+  });
+  return m;
 }
 /* Rest is counted after BOTH exercises in a pair are done — it is not the
    time allowed to complete the superset. */
-var PAIRLBL={A1:"Superset · do 1a then 1b · 90 s rest after each pair",
+var PAIRLBL={A1:"Superset · do 1a then 1b · 2–2.5 min rest after each pair",
              B1:"Superset · do 1a then 1b · 90 s rest after each pair",
              C1:"Superset · do 1a then 1b · 90 s rest after each pair",
              C2:"Superset · do 2a then 2b · 2 min rest after each pair"};
@@ -834,6 +919,12 @@ function renderTodayAlerts(){
   }
   if(consec) out+='<div class="alert warn"><b>Back-to-back barbell days on '+pretty(consec)+'</b>Sessions A and B on consecutive days stack lumbar and knee-extensor fatigue. Minimum 48 h, and never A and B together.</div>';
 
+  if(gap===0 && !DB.mobility.some(function(m){return m.date===today()}))
+    out+='<div class="alert ok"><b>Lifted today — mobility not logged</b>Post-lift block, about 17 min.'+
+      '<button class="btn slim" data-jump="mob" style="margin-top:9px">→ Mobility (post-lift)</button></div>';
+
+  if(syncOn()&&SY.lastErr) out+='<div class="alert warn"><b>Sync failed</b>'+esc(SY.lastErr)+'. The log is safe on this phone; it uploads again next time the app opens, or use Data → Sync now.</div>';
+
   if(c&&tierOf(c)==="red") out+='<div class="alert stop"><b>Red day</b>No loaded knee extension. Isometrics, deadlift at −15%, and upper body only.</div>';
   document.getElementById("todayAlerts").innerHTML=out;
 }
@@ -887,6 +978,7 @@ function tierAdjust(target,ex){
 function renderSession(openIdx){
   document.querySelectorAll("#pickSession button").forEach(function(b){
     b.setAttribute("aria-pressed",String(b.dataset.s===curSession))});
+  if(curSession==="M"){ renderMobility(); return; }
   var p=PROG[curSession];
   document.getElementById("sessionTag").textContent=p.tag;
 
@@ -962,6 +1054,7 @@ function renderSession(openIdx){
   html+='<div class="field" style="margin-top:4px"><label>Session note — deviations, substitutions, why</label>'+
     '<textarea id="sessNote" rows="3" placeholder="e.g. leg press swapped for hack squat, machine taken"></textarea></div>';
   html+='<button class="btn go" id="saveSession" style="margin-top:4px">Save '+p.name+'</button>';
+  html+='<p class="muted" style="text-align:center;margin:10px 0 0">After saving → Mobility (post-lift, ~17 min)</p>';
   html+='<p class="tiny" style="text-align:center;margin-top:10px">Tempo is eccentric–pause–concentric in seconds. RIR = reps left in the tank; RPE is 10 − RIR, so there is only one box to fill. Warm-up ticks are not logged.</p>';
   document.getElementById("sessionBody").innerHTML=html;
 }
@@ -1084,6 +1177,7 @@ document.getElementById("sessionBody").addEventListener("click",function(e){
   DB.sessions.sort(function(a,b){return a.date<b.date?-1:1});
   if(!DB.blockStart) DB.blockStart=today();
   save(); renderAll(); toast(p.name+" saved"); go("today");
+  syncNow(false);   /* upload straight away — the app is often closed right after */
 });
 
 /* ═══════════ cardio / iso / vitals / weight ═══════════ */
@@ -1190,6 +1284,7 @@ function renderHist(){
     dod>=28 ? "Last 28 days" : "Last "+win+" day"+(win===1?"":"s")+" — all the data there is";
 
   var s=within(DB.sessions,win), c=within(DB.cardio,win), i=isoCount(win), ch=within(DB.checks,win);
+  var mob=within(DB.mobility,win);
   var tend=s.filter(function(x){return x.flags&&x.flags.tendon}).length+within(DB.iso,win).filter(isKneeIso).length;
 
   function line(lbl,n,per,target){
@@ -1201,6 +1296,7 @@ function renderHist(){
     line("Tendon exposures",tend,tend/weeks,3)+'<div class="hr"></div>'+
     line("Cardio",c.length,c.length/weeks,2)+'<div class="hr"></div>'+
     line("Isometrics",i,i/weeks,0)+'<div class="hr"></div>'+
+    line("Mobility",mob.length,mob.length/weeks,3)+'<div class="hr"></div>'+
     '<div class="spread"><span class="muted">Morning checks</span><span class="mono"><b>'+ch.length+'</b> of '+win+'</span></div>';
 
   if(ch.length < win*0.7){
@@ -1243,6 +1339,7 @@ function renderHist(){
     var nx=checkOn(shift(x.date,1));
     all.push({d:x.date,t:"Isometrics",s:esc(isoText(x," · "))+
       (nx&&isKneeIso(x)?" · next AM decline "+nx.decline:"")})});
+  DB.mobility.forEach(function(x){all.push({d:x.date,t:"Mobility",s:mobText(x," · ")})});
   DB.weight.forEach(function(x){all.push({d:x.date,t:"Weight",s:x.kg.toFixed(1)+" kg"+(x.bf?" · "+x.bf+"% bf":"")})});
   DB.vitals.forEach(function(x){all.push({d:x.date,t:"Vitals",s:"RHR "+x.rhr+(x.hrv?" · HRV "+x.hrv:"")+(x.status?" · "+x.status:"")})});
   DB.checks.forEach(function(x){all.push({d:x.date,t:"Check",s:tierOf(x)+" · stairs "+x.stairs+" · decline "+x.decline+
@@ -1269,6 +1366,8 @@ function textExport(){
   L.push("  Tendon:     "+tend+"  ("+(tend/weeks).toFixed(1)+"/wk, target 3)");
   L.push("  Cardio:     "+c.length+"  ("+(c.length/weeks).toFixed(1)+"/wk, target 2)");
   L.push("  Isometrics: "+i);
+  var mob=within(DB.mobility,win);
+  L.push("  Mobility:   "+mob.length+"  ("+(mob.length/weeks).toFixed(1)+"/wk, target 3)");
   L.push("  Days since tendon / hinge / cardio: "+
     [daysAgo(lastTendon()),daysAgo(lastHinge()),daysAgo(lastCardio())].map(function(x){return x===null?"never":x}).join(" / "));
   L.push("");
@@ -1336,16 +1435,26 @@ function textExport(){
   });
   L.push("");
 
+  L.push("MOBILITY");
+  if(!DB.mobility.length) L.push("  (none)");
+  DB.mobility.slice(-12).forEach(function(x){L.push("  "+x.date+": "+mobText(x))});
+  L.push("");
+
   L.push("PRESCRIBED THIS BLOCK  [sets × reps · tempo · RIR · rest]");
   ["A","B","C"].forEach(function(k){
     L.push("  "+PROG[k].name);
     PROG[k].ex.forEach(function(e){
+      var tg=(typeof e.target==="number")?effTarget(e.n,e.target):null;
       L.push("    "+e.n+": "+e.sets+"×"+e.reps+" · "+(e.tempo||"—")+" · RIR "+e.rir+" · "+e.rest+
-        (e.target?" · "+e.target+" kg"+(e.bwPlus?" added":""):(e.bwPlus?" · bodyweight":"")));
-      if(e.alt) L.push("      or "+e.alt.n+": "+e.sets+"×"+(e.alt.reps||e.reps)+" · "+(e.tempo||"—")+" · RIR "+e.rir+" · "+e.rest+
-        (e.alt.target?" · "+e.alt.target+" kg":""));
+        (tg?" · "+tg+" kg"+(e.bwPlus?" added":""):(e.bwPlus?" · bodyweight":"")));
+      if(e.alt){
+        var ta=(typeof e.alt.target==="number")?effTarget(e.alt.n,e.alt.target):null;
+        L.push("      or "+e.alt.n+": "+e.sets+"×"+(e.alt.reps||e.reps)+" · "+(e.tempo||"—")+" · RIR "+e.rir+" · "+e.rest+
+          (ta?" · "+ta+" kg":""));
+      }
     });
   });
+  if(DB.coach&&DB.coach.acceptedId) L.push("  Loads include coach review "+DB.coach.acceptedId+", accepted "+DB.coach.acceptedOn);
   return L.join("\n");
 }
 
@@ -1396,17 +1505,19 @@ function renderData(){
     ["Leg press specifically","Working load gives 8 reps at RIR 3–4 with the 3-1-3 tempo intact. All sets RIR ≥3 → +5 kg."],
     ["Deadlift","All sets RIR ≥3 with bar speed held → +5 kg. Lower over 1–2 s to a dead stop. Next-morning lower-back stiffness over 30 minutes means the last jump was too big."],
     ["RDL","Capped at RIR 4. Same load across all sets. All sets RIR ≥4 → +5 kg."],
-    ["Bench press","All sets RIR ≥2 → +2.5 kg. Any set at RIR 1 or less → hold."],
+    ["Bench press","All sets RIR ≥2 → +2.5 kg. Any set at RIR 1 or less → hold. Rest is 2–2.5 min after each bench/row pair: the log showed RIR falling by three points across the four sets at 90 s."],
     ["Warm-up ramp","Three sets — 50% × 5, 70% × 3, 85% × 1 — calculated from the working load and rounded to 2.5 kg. Only on the barbell lifts. Normal tempo; the slow tempo is for working sets."],
     ["Overhead press","Three sets. Barbell: all sets RIR ≥3 → +5 kg back to 70 kg, then 2.5 kg steps. Dumbbells (when there is no room for the bar): 3×8, all sets RIR ≥3 → +2 kg per hand. Pick the variant with the toggle on the Lift screen; it is logged under its own name."],
-    ["Pull-ups vs chin-ups","The chin-up is the loaded vertical pull: 3×8 at RIR ≥2 → add 2.5 kg. Pull-ups stay at bodyweight this block — loading both in the same block doubles new stimulus on the same shoulder."],
+    ["Pull-ups vs chin-ups","The chin-up is the loaded vertical pull: 3×8 at RIR ≥2 → add 2.5 kg, only if elbow pain is ≤3/10 during the session and the next morning (a working threshold borrowed from the knee checks, not an evidence-based cut-off). Pull-ups stay at bodyweight this block — loading both in the same block doubles new stimulus on the same shoulder."],
     ["Dumbbell steps","Dumbbells go up in 2 kg steps per hand (DB row, incline DB press, DB overhead press). Barbell lifts use 2.5 or 5 kg."],
     ["Supersets","Do the a-exercise, then the b-exercise, then rest. The rest time on the label is counted after the pair, not the time allowed to finish it. Pairs are colour-coded on the Lift screen."],
     ["Axial spacing","Minimum 48 h between squat day and deadlift day. Sessions A and B never share a day and never sit on consecutive days."],
     ["Amber days","Hold the load, or cut a set. Do not add weight on an amber morning — that is the entire function of the gate. On amber and red days any load above the prescribed number turns amber as you type, saving asks for confirmation, and the session is flagged in the export."],
     ["Pain rules","Pain up to 3–4/10 during tendon sets is acceptable and expected. The signal that matters is the next morning: if stairs or decline are worse 24 h later, the load was too much."],
     ["Joint-line pain","Different signal from tendon pain. Patellar tendinopathy gives inferior-pole pain, not joint-line pain. After bilateral meniscectomy, joint-line tenderness is common and non-specific — it can reflect remnant meniscal tissue, early compartment change, or simple load irritation, and this app cannot tell you which. Persistent joint-line pain, mechanical catching or locking, or a visible effusion warrants an orthopaedic opinion rather than more load management."],
-    ["Deload","Week 6, or the first amber week. Volume −40%, load held, tempo kept."]
+    ["Deload","Week 6, or the first amber week. Volume −40%, load held, tempo kept."],
+    ["Mobility","After lifting, never before: Lift → Mobility. Post-lift block about 17 min, up to 3× a week. The full 30 min routine stands in on a non-lifting day in a week with fewer than three post-lift blocks, and counts as 1. Mobility does not count toward tendon exposure."],
+    ["Coach review & sync","The log uploads to your private repo whenever you save while the app is open. A weekly review is written back and shown in the Coach tab. Suggested loads change nothing until you tap Accept. One tap never applies a jump of more than 10 kg, and applies no increases in a week the review flags as no-increase. Amber and red mornings still override any accepted load on the day."]
   ];
   document.getElementById("rules").innerHTML=rules.map(function(s){
     return '<details class="ex" style="margin-bottom:7px"><summary><div class="nm" style="font-size:14px">'+s[0]+
@@ -1428,7 +1539,8 @@ function renderData(){
     ["Stair climber","Counts as a knee-extensor exposure, not as free cardio. Repeated step-up loading at a shallow-to-moderate knee angle is real patellar tendon work. Useful, but put it on a non-squat day and keep it short while symptoms are live."],
     ["Heart rate zones","All zone numbers here come from percentages of heart-rate reserve using an age-estimated max of "+z.max+" bpm (208 − 0.7 × age). That estimate has a standard deviation of roughly 7–11 bpm between individuals, so an individual's true zones can sit a full bracket away. The talk test is the cheaper and more reliable anchor: if full sentences are not possible, you are above the bracket regardless of the watch."],
     ["Core","Optional — not a programme pillar. A short menu chosen around the knees, shoulder and back:<br>• <b>Anti-extension:</b> dead bug; ab-wheel rollout from the knees on a pad, only if kneeling is comfortable.<br>• <b>Anti-rotation:</b> Pallof press.<br>• <b>Anti-lateral flexion:</b> side plank; suitcase carry.<br>• <b>Back:</b> bird dog.<br>Evidence: these are widely recommended, but the support is mainly biomechanical — spine-loading and muscle-activation studies, much of it from McGill's group. Evidence that core training reduces injury or improves lifting performance in trained lifters is limited, and heavy compound lifts already load the trunk substantially. Logging core does not count as a tendon exposure."],
-    ["Indian clubs","10 kg only, front of body. Behind-the-head patterns need a conversation first."]
+    ["Indian clubs","10 kg only, front of body. Behind-the-head patterns need a conversation first."],
+    ["Mobility","Aim: maintain range, not gain it. Placed after lifting because static holds of 60 s or more per muscle group cost more strength than shorter ones (Behm 2016), and weekly frequency relates to range more than time within one session (Thomas 2018). Honest gaps: the post-lift block gives about 3 min per muscle group per week, under the dose studied for range <i>gains</i>, and no study I know of sets a maintenance dose. Strength training through full range and stretching did not differ in their effect on range in a meta-analysis of heterogeneous trials (Afonso 2021). The knee, shoulder and blood-pressure modifications are clinical reasoning from your history — no trial tested these substitutions."]
   ];
   document.getElementById("specs").innerHTML=specs.map(function(s){
     return '<details class="ex" style="margin-bottom:7px"><summary><div class="nm" style="font-size:14px">'+s[0]+
@@ -1440,8 +1552,412 @@ document.getElementById("v-data").addEventListener("click",function(e){
   DB.blockStart=today(); save(); renderData(); toast("New block started");
 });
 
+/* ═══════════ mobility ═══════════
+   Two routines. Post-lift is the default (about 17 min, straight after the
+   last lift). Full is the same list with longer holds on the five large
+   muscle groups plus four extra drills (about 30 min), for a non-lifting
+   day. Ticks are a working aid and are not stored; only completion is.
+   Mobility never counts toward tendon exposure. */
+var MOB=[
+  {n:"Cat–camel",r:"Lumbar + T-spine",post:"8 slow reps",full:"8 slow reps",
+   m:"Active range only. No loaded end-range flexion after deadlifts."},
+  {n:"Open-book rotation",r:"T-spine",post:"8/side",full:"8/side"},
+  {n:"Half-kneeling hip flexor stretch, glute squeezed",r:"Hip flexors",post:"2 × 30 s/side",full:"3 × 30 s/side",
+   m:"Pad under the knee; front knee at about 90°."},
+  {n:"Supine strap hamstring stretch",r:"Hamstrings",post:"2 × 30 s/side",full:"3 × 30 s/side"},
+  {n:"Supine figure-4",r:"Glutes / hip external rotation",post:"2 × 30 s/side",full:"3 × 30 s/side"},
+  {n:"Seated butterfly",r:"Adductors",post:"1 × 45 s",full:"2 × 45 s",
+   m:"Replaces rock-backs and Cossack squats, which load the knee in deep flexion."},
+  {n:"Side-lying quad stretch",r:"Quads",post:"2 × 30 s/side",full:"3 × 30 s/side",
+   m:"Comfortable flexion only, pain ≤3/10. No couch stretch or heel-sitting."},
+  {n:"Knee-to-wall + wall calf stretch",r:"Ankle",post:"10 reps + 30 s/side",full:"10 reps + 2 × 30 s/side"},
+  {n:"Doorway pec stretch (≤90° abduction) + cross-body stretch",r:"Shoulder",post:"30 s each/side",full:"30 s each/side",
+   m:"No sleeper stretch and no forced end-range external rotation in abduction."},
+  {n:"Standing lat stretch on the rack",r:"Lats / overhead",post:"2 × 30 s/side",full:"3 × 30 s/side"},
+  {n:"Chin tucks + gentle upper trap / levator stretch",r:"Neck",post:"10 reps + 30 s/side",full:"10 reps + 30 s/side",
+   m:"Breathe normally throughout. No breath-holding."},
+  {n:"90/90 hip switches",r:"Hips",full:"8/side",fullOnly:true},
+  {n:"Thoracic extension over a foam roller",r:"T-spine",full:"5 positions",fullOnly:true},
+  {n:"Prone press-ups",r:"Lumbar extension",full:"10 reps",fullOnly:true},
+  {n:"Wall slides",r:"Shoulder / scapula",full:"10 reps",fullOnly:true}
+];
+var mobRoutine="post", mobTicks={post:{},full:{}};
+function mobList(r){return MOB.filter(function(d){return r==="full"||!d.fullOnly})}
+function mobText(x,sep){
+  return (x.routine==="full"?"Full (30 min)":"Post-lift")+(sep||"  ·  ")+x.done+"/"+x.total+" drills";
+}
+function mobWeek(){return within(DB.mobility,7).length}
+
+function renderMobility(){
+  document.getElementById("sessionTag").textContent="After lifting, not before · post-lift ~17 min · full ~30 min";
+  document.getElementById("spaceWarn").innerHTML="";
+  var n=mobWeek(), list=mobList(mobRoutine), tk=mobTicks[mobRoutine];
+  var done=list.filter(function(d,i){return tk[i]}).length;
+  var html='<div class="card"><div class="spread"><span class="muted">Mobility · last 7 days</span>'+
+    '<span class="mono" style="font-size:20px;font-weight:600">'+n+'<span style="font-size:13px;color:var(--ink-3)"> / 3</span></span></div>'+
+    (n>=3?'<p class="tiny" style="margin:8px 0 0">Weekly maximum reached. More is not needed for maintenance.</p>':'')+'</div>';
+  html+='<div class="seg" style="margin-bottom:8px">'+
+    '<button data-mr="post" aria-pressed="'+String(mobRoutine==="post")+'">Post-lift (15–20 min)</button>'+
+    '<button data-mr="full" aria-pressed="'+String(mobRoutine==="full")+'">Full (30 min)</button></div>';
+  html+='<p class="tiny" style="margin:0 0 12px">'+(mobRoutine==="post"
+    ? "Straight after the last lift. Same block after A, B and C."
+    : "Stand-in for a non-lifting day, in a week with fewer than 3 post-lift blocks. Counts as 1.")+'</p>';
+  html+='<div class="card" style="padding-top:4px;padding-bottom:4px">'+list.map(function(d,i){
+    return '<div class="mrow" data-mtick="'+i+'" role="button" aria-pressed="'+String(!!tk[i])+'"><span class="tick">✓</span><div>'+
+      '<div class="mn">'+(i+1)+'. '+esc(d.n)+'</div>'+
+      '<div class="md">'+esc(d.r)+' · '+esc(mobRoutine==="full"?d.full:d.post)+'</div>'+
+      (d.m?'<div class="mm">'+esc(d.m)+'</div>':'')+'</div></div>';
+  }).join("")+'</div>';
+  html+='<button class="btn slim" id="mobAll" style="margin-bottom:8px">Tick all</button>';
+  html+='<button class="btn go" id="mobDone">Mobility complete · '+done+'/'+list.length+'</button>';
+  html+='<p class="tiny" style="text-align:center;margin-top:10px">Ticks are not stored — only the completed session and how many drills were done. Mobility does not count toward tendon exposure.</p>';
+  document.getElementById("sessionBody").innerHTML=html;
+}
+
+document.getElementById("sessionBody").addEventListener("click",function(e){
+  if(curSession!=="M") return;
+  var mr=e.target.closest("[data-mr]");
+  if(mr){ mobRoutine=mr.dataset.mr; renderMobility(); return; }
+  var row=e.target.closest("[data-mtick]");
+  if(row){ var i=parseInt(row.dataset.mtick,10), tk=mobTicks[mobRoutine]; tk[i]=!tk[i]; renderMobility(); return; }
+  if(e.target.closest("#mobAll")){
+    mobList(mobRoutine).forEach(function(d,i){mobTicks[mobRoutine][i]=true}); renderMobility(); return;
+  }
+  if(e.target.closest("#mobDone")){
+    var list=mobList(mobRoutine), tk2=mobTicks[mobRoutine];
+    var done=list.filter(function(d,i){return tk2[i]}).length;
+    if(!done){toast("Tick the drills you did");return}
+    DB.mobility.push({date:today(),routine:mobRoutine,done:done,total:list.length});
+    DB.mobility.sort(function(a,b){return a.date<b.date?-1:1});
+    mobTicks[mobRoutine]={};
+    save(); renderAll(); toast("Mobility saved — "+mobWeek()+"/3 this week"); go("today");
+  }
+});
+
+/* ═══════════ sync (private GitHub repo) ═══════════
+   The whole log is written to log.json in a PRIVATE repo through the
+   GitHub contents API, and the weekly review is read back from
+   review.json in the same repo.
+
+   Settings (repo + token) live under their own storage key, outside DB,
+   so the token can never end up in a JSON backup, the text export or the
+   uploaded log.
+
+   iOS cannot sync in the background: an upload happens while the app is
+   open — right after a save, on opening the app, or on "Sync now". A
+   failed upload is retried the next time the app is opened. */
+var SYNC_KEY="ledger_sync", syncMem={};
+function loadSync(){
+  if(memOnly) return syncMem;
+  try{var r=localStorage.getItem(SYNC_KEY), o=r?JSON.parse(r):{};return (o&&typeof o==="object"&&!Array.isArray(o))?o:{}}
+  catch(e){return {}}
+}
+function saveSync(){
+  if(memOnly){syncMem=SY;return}
+  try{ if(SY.repo||SY.token) localStorage.setItem(SYNC_KEY,JSON.stringify(SY)); else localStorage.removeItem(SYNC_KEY); }catch(e){}
+}
+var SY=loadSync(), syncBusy=false, syncTimer=null, syncAgain=false, syncSetupMsg=null, lastReviewCheck=0;
+function syncOn(){return !!(SY&&SY.repo&&SY.token)}
+
+/* Only Authorization, Accept and Content-Type are sent: those are within
+   the headers GitHub's CORS policy allows from a browser. */
+function ghFetch(path,opt){
+  opt=opt||{};
+  var h={"Authorization":"Bearer "+SY.token,"Accept":"application/vnd.github+json"};
+  if(opt.body) h["Content-Type"]="application/json";
+  return fetch("https://api.github.com/repos/"+SY.repo+path,
+    {method:opt.method||"GET",headers:h,body:opt.body,cache:"no-store"});
+}
+function ghErr(r){
+  var m = r.status===401 ? "token rejected (401)"
+        : r.status===403 ? "access denied or rate-limited (403)"
+        : r.status===404 ? "repo not found, or the token has no access (404)"
+        : r.status===409 ? "conflict (409)"
+        : "GitHub error "+r.status;
+  var e=new Error(m); e.status=r.status; return e;
+}
+function errText(e){
+  if(e&&e.name==="TypeError") return "no connection";
+  return (e&&e.message)?String(e.message).slice(0,140):"unknown error";
+}
+function b64(str){return btoa(unescape(encodeURIComponent(str)))}
+function unb64(b){return decodeURIComponent(escape(atob(String(b).replace(/\s/g,""))))}
+function getSha(file){
+  return ghFetch("/contents/"+file).then(function(r){
+    if(r.status===404) return null;
+    if(!r.ok) throw ghErr(r);
+    return r.json().then(function(j){return (j&&j.sha)?j.sha:null});
+  });
+}
+function putFile(file,text,sha){
+  var body={message:"Ledger sync "+new Date().toISOString(),content:b64(text)};
+  if(sha) body.sha=sha;
+  return ghFetch("/contents/"+file,{method:"PUT",body:JSON.stringify(body)}).then(function(r){
+    if(!r.ok) throw ghErr(r); return true;
+  });
+}
+/* what gets uploaded: the full ledger, the current prescribed loads and
+   the same text export used for coaching. No token, no cached review. */
+function syncPayload(){
+  var d=Object.assign({},DB); d.coach=Object.assign({},DB.coach,{review:null});
+  var idx=targetIndex(), tg={};
+  Object.keys(idx).forEach(function(k){tg[k]=idx[k].cur});
+  return JSON.stringify({app:"training-ledger",schema:1,appVersion:DB.version,
+    syncedAt:new Date().toISOString(),today:today(),targets:tg,data:d,textExport:textExport()});
+}
+function scheduleSync(ms){ clearTimeout(syncTimer); syncTimer=setTimeout(function(){syncNow(false)},ms); }
+function markDirty(){
+  if(!syncOn()) return;
+  SY.dirty=true; saveSync(); scheduleSync(1500);
+}
+function syncNow(manual){
+  if(!syncOn()){ if(manual) toast("Set up sync first"); return; }
+  if(syncBusy){ syncAgain=true; return; }
+  clearTimeout(syncTimer); syncBusy=true; syncAgain=false; renderSyncStatus();
+  var text=syncPayload();
+  getSha("log.json").then(function(sha){
+    return putFile("log.json",text,sha).catch(function(e){
+      /* the file changed between reading its sha and writing: read again, once */
+      if(e.status===409||e.status===422)
+        return getSha("log.json").then(function(s2){return putFile("log.json",text,s2)});
+      throw e;
+    });
+  }).then(function(){
+    SY.lastSync=new Date().toISOString(); SY.lastErr=null; SY.dirty=syncAgain; saveSync();
+    if(manual) toast("Synced");
+    return fetchReview(false);
+  }).catch(function(e){
+    SY.lastErr=errText(e); SY.dirty=true; saveSync();
+    if(manual) toast("Sync failed");
+  }).then(function(){
+    syncBusy=false; renderSyncStatus(); renderTodayAlerts();
+    if(syncAgain){ syncAgain=false; scheduleSync(1500); }
+  });
+}
+
+/* ── weekly review (review.json) ──
+   Everything in the review is remote text: it is length-capped here and
+   HTML-escaped wherever it is shown. */
+function rvStr(x,max){return (typeof x==="string")?x.slice(0,max||400):""}
+function normReview(o){
+  if(!o||typeof o!=="object"||Array.isArray(o)) return null;
+  var id=rvStr(o.id,40); if(!id) return null;
+  var r={id:id,generatedAt:rvStr(o.generatedAt,40),
+    from:rvStr(o.period&&o.period.from,12),to:rvStr(o.period&&o.period.to,12),
+    headline:rvStr(o.headline,400),plan:rvStr(o.plan,600),
+    noIncrease:o.noIncrease===true,flag:null,status:[],lifts:[]};
+  if(o.flag&&typeof o.flag==="object"&&rvStr(o.flag.text))
+    r.flag={level:o.flag.level==="stop"?"stop":"warn",text:rvStr(o.flag.text,500)};
+  if(Array.isArray(o.status)) o.status.slice(0,12).forEach(function(x){var t=rvStr(x,300); if(t) r.status.push(t)});
+  if(Array.isArray(o.lifts)) o.lifts.slice(0,30).forEach(function(l){
+    if(!l||typeof l!=="object") return;
+    var n=rvStr(l.name,60); if(!n) return;
+    r.lifts.push({name:n,last:rvStr(l.last,120),rule:rvStr(l.rule,300),
+      next:(typeof l.next==="number"&&isFinite(l.next))?l.next:null});
+  });
+  return r;
+}
+function fetchReview(manual){
+  if(!syncOn()) return Promise.resolve();
+  lastReviewCheck=Date.now();
+  return ghFetch("/contents/review.json").then(function(r){
+    if(r.status===404) return null;
+    if(!r.ok) throw ghErr(r);
+    return r.json();
+  }).then(function(j){
+    SY.reviewErr=null;
+    if(!j){ saveSync(); if(manual) toast("No review yet"); return; }
+    var rv=null;
+    try{ rv=normReview(JSON.parse(unb64(j.content))); }catch(e){ rv=null; }
+    if(!rv) throw new Error("review.json is not in the expected format");
+    var isNew=!DB.coach.review||DB.coach.review.id!==rv.id;
+    DB.coach.review=rv; DB.coach.fetchedAt=new Date().toISOString(); saveLocal(); saveSync();
+    if(manual) toast(isNew?"New review loaded":"Review is up to date");
+  }).catch(function(e){
+    SY.reviewErr=errText(e); saveSync();
+    if(manual) toast("Could not load the review");
+  }).then(function(){ renderCoach(); renderSyncStatus(); });
+}
+
+/* ── status line ── */
+function ago(iso){
+  var s=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/1000));
+  if(isNaN(s)) return "?";
+  if(s<60) return "just now";
+  var m=Math.round(s/60); if(m<60) return m+" min ago";
+  var h=Math.round(m/60); if(h<48) return h+" h ago";
+  return Math.round(h/24)+" d ago";
+}
+function syncStatus(){
+  if(syncSetupMsg) return {t:syncSetupMsg,bad:true};
+  if(!syncOn()) return {t:"Sync is off",bad:false};
+  if(syncBusy) return {t:"Syncing…",bad:false};
+  if(SY.lastErr) return {t:"Sync failed — "+SY.lastErr+(SY.lastSync?" · last OK "+ago(SY.lastSync):""),bad:true};
+  if(!SY.lastSync) return {t:"Connected to "+SY.repo+" · not synced yet",bad:false};
+  return {t:"Synced "+ago(SY.lastSync)+(SY.dirty?" · changes pending":"")+
+    (SY.reviewErr?" · review: "+SY.reviewErr:""),bad:!!SY.reviewErr};
+}
+function renderSyncStatus(){
+  var st=syncStatus();
+  ["syncStatusData","syncStatusCoach"].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.textContent=st.t; el.classList.toggle("bad",st.bad);
+  });
+  var rp=document.getElementById("syRepo"), tk=document.getElementById("syTok");
+  if(rp&&document.activeElement!==rp&&!rp.value) rp.value=SY.repo||"";
+  if(tk) tk.placeholder=SY.token?"saved on this phone — paste to replace":"github_pat_…";
+  var dot=document.getElementById("coachDot");
+  if(dot) dot.style.display=(DB.coach.review&&DB.coach.review.id!==DB.coach.seenId)?"inline-block":"none";
+}
+
+/* ── setup ── */
+document.getElementById("btnSyncSave").addEventListener("click",function(){
+  var repo=document.getElementById("syRepo").value.trim().replace(/^https?:\/\/github\.com\//i,"").replace(/\.git$/i,"").replace(/\/+$/,"");
+  var tok=document.getElementById("syTok").value.trim()||SY.token||"";
+  if(!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)){toast("Repo as owner/name");return}
+  if(!tok){toast("Paste the access token");return}
+  var prev=SY;
+  SY=Object.assign({},prev,{repo:repo,token:tok});
+  syncSetupMsg="Testing connection…"; renderSyncStatus();
+  ghFetch("").then(function(r){
+    if(!r.ok) throw ghErr(r);
+    return r.json();
+  }).then(function(j){
+    /* hard stop: this log holds weight, symptoms and loads */
+    if(!j||j.private!==true) throw new Error("that repo is PUBLIC — sync refused. Make it private first");
+    syncSetupMsg=null;
+    SY.lastErr=null; SY.reviewErr=null; SY.dirty=true; saveSync();
+    document.getElementById("syTok").value="";
+    toast("Connected"); renderCoach(); syncNow(true);
+  }).catch(function(e){
+    SY=prev; syncSetupMsg="Not connected — "+errText(e);
+    renderSyncStatus(); toast("Not connected");
+    syncSetupMsg=null;
+  });
+});
+document.getElementById("btnSyncNow").addEventListener("click",function(){syncNow(true)});
+document.getElementById("btnSyncOff").addEventListener("click",function(){
+  if(!SY.repo&&!SY.token){toast("Sync is already off");return}
+  if(!window.confirm("Disconnect sync? The token is removed from this phone. Files already in the repo stay there.")) return;
+  clearTimeout(syncTimer); SY={}; saveSync();
+  document.getElementById("syRepo").value=""; document.getElementById("syTok").value="";
+  renderSyncStatus(); renderCoach(); renderTodayAlerts(); toast("Sync disconnected");
+});
+
+/* on opening the app, and when it returns to the foreground */
+function syncBoot(){
+  if(!syncOn()) return;
+  if(SY.dirty) syncNow(false); else fetchReview(false);
+}
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible"||!syncOn()||syncBusy) return;
+  if(SY.dirty) syncNow(false);
+  else if(Date.now()-lastReviewCheck>10*60*1000) fetchReview(false);
+});
+
+/* ═══════════ coach ═══════════
+   Shows the latest weekly review. Suggested loads change nothing until
+   "Accept" is tapped. Two guards on that one tap:
+     · a jump of more than MAX_JUMP kg is never applied
+     · in a no-increase week, increases are never applied
+   The day's amber/red tier still adjusts whatever load is accepted. */
+var MAX_JUMP=10;
+function kgTxt(v,t){return (t&&t.bwPlus?"+":"")+v+" kg"+(t&&t.inc?" per hand":"")}
+function reviewChanges(r){
+  var idx=targetIndex(), out=[];
+  r.lifts.forEach(function(l){
+    var t=idx[l.name]; if(!t||l.next===null) return;
+    var d=Math.round((l.next-t.cur)*100)/100; if(d===0) return;
+    var blk=null;
+    if(l.next<0||l.next>400) blk="outside the plausible range";
+    else if(d>MAX_JUMP) blk="jump over "+MAX_JUMP+" kg — raise it in chat";
+    else if(r.noIncrease&&d>0) blk="no increases this week";
+    out.push({name:l.name,cur:t.cur,next:l.next,delta:d,blocked:blk});
+  });
+  return out;
+}
+function markReviewSeen(){
+  var r=DB.coach.review;
+  if(r&&DB.coach.seenId!==r.id){ DB.coach.seenId=r.id; saveLocal(); }
+  renderSyncStatus();
+}
+function renderCoach(){
+  var box=document.getElementById("coachBody"); if(!box) return;
+  var r=DB.coach.review, h="";
+  h+='<div class="card"><div class="spread" style="align-items:center"><div class="eyebrow" style="margin:0">Sync</div>'+
+     '<button class="btn slim" id="btnReviewRefresh" style="width:auto">Refresh</button></div>'+
+     '<div class="syncline" id="syncStatusCoach" style="margin-top:9px"></div></div>';
+  if(!syncOn()) h+='<div class="alert warn"><b>Sync is not set up</b>Data → Sync: enter the private repo and the access token. The weekly review cannot reach the app without it.</div>';
+  if(!r){
+    h+='<div class="card"><div class="eyebrow">Weekly review</div><p class="muted" style="margin:0">No review yet. It appears here after the weekly review has run.</p></div>';
+    box.innerHTML=h; renderSyncStatus(); return;
+  }
+  if(r.flag) h+='<div class="alert '+(r.flag.level==="stop"?"stop":"warn")+'"><b>Flag</b>'+esc(r.flag.text)+'</div>';
+  if(r.noIncrease) h+='<div class="alert warn"><b>No load increases this week</b>Accepting applies holds and reductions only.</div>';
+
+  h+='<div class="card"><div class="eyebrow">Weekly review · '+esc(r.id)+
+     ((r.from&&r.to)?' · '+esc(r.from)+' → '+esc(r.to):'')+'</div>'+
+     (r.headline?'<h2 style="font-size:16px;line-height:1.4">'+esc(r.headline)+'</h2>':'')+
+     (r.status.length?'<div class="hr"></div>'+r.status.map(function(x){
+        return '<p class="muted" style="margin:0 0 7px">• '+esc(x)+'</p>'}).join(""):'')+'</div>';
+
+  var idx=targetIndex(), ch=reviewChanges(r), chBy={};
+  ch.forEach(function(c){chBy[c.name]=c});
+  if(r.lifts.length){
+    h+='<div class="card"><div class="eyebrow">Next loads</div>'+r.lifts.map(function(l){
+      var t=idx[l.name], c=chBy[l.name], right="";
+      if(c) right='<span class="lx '+(c.blocked?"blk":(c.delta>0?"up":"dn"))+'">'+esc(kgTxt(c.cur,t))+' → '+esc(kgTxt(c.next,t))+'</span>';
+      else if(t&&l.next!==null) right='<span class="lx">'+esc(kgTxt(l.next,t))+'</span>';
+      return '<div class="lrow"><div class="spread"><span class="ln">'+esc(l.name)+'</span>'+right+'</div>'+
+        (l.last?'<div class="ll">last: '+esc(l.last)+'</div>':'')+
+        (l.rule?'<div class="lr">'+esc(l.rule)+'</div>':'')+
+        (c&&c.blocked?'<div class="lr" style="color:var(--red)">Not applied by Accept: '+esc(c.blocked)+'.</div>':'')+'</div>';
+    }).join("")+'</div>';
+  }
+
+  var ok=ch.filter(function(c){return !c.blocked}), blocked=ch.length-ok.length;
+  h+='<div class="card"><div class="eyebrow">Apply</div>';
+  if(ok.length){
+    h+='<button class="btn go" id="btnAccept">Accept '+ok.length+' suggested load'+(ok.length===1?"":"s")+'</button>'+
+       '<p class="tiny" style="margin:9px 0 0">Nothing changes until you tap this. '+
+       (blocked?blocked+' suggestion'+(blocked===1?" is":"s are")+' held back (see above).':'')+'</p>';
+  } else {
+    h+='<p class="muted" style="margin:0">'+(DB.coach.acceptedId===r.id
+        ? 'Loads from this review were accepted on '+esc(pretty(DB.coach.acceptedOn))+'.'
+        : 'Prescribed loads already match this review.')+
+       (blocked?' '+blocked+' suggestion'+(blocked===1?" is":"s are")+' held back (see above).':'')+'</p>';
+  }
+  if(DB.coach.prevTargets) h+='<button class="btn slim" id="btnUndoAccept" style="margin-top:10px">Undo last acceptance</button>';
+  h+='</div>';
+
+  if(r.plan) h+='<div class="card"><div class="eyebrow">This week</div><p class="muted" style="margin:0">'+esc(r.plan)+'</p></div>';
+  h+='<p class="tiny" style="text-align:center">The review is one-way. Anything that needs discussion goes to chat. Amber and red mornings still override accepted loads on the day.</p>';
+  box.innerHTML=h; renderSyncStatus();
+}
+document.getElementById("coachBody").addEventListener("click",function(e){
+  if(e.target.closest("#btnReviewRefresh")){
+    if(!syncOn()){toast("Set up sync first");return}
+    fetchReview(true).then(markReviewSeen); return;
+  }
+  if(e.target.closest("#btnAccept")){
+    var r=DB.coach.review; if(!r) return;
+    var ok=reviewChanges(r).filter(function(c){return !c.blocked});
+    if(!ok.length){toast("Nothing to apply");return}
+    DB.coach.prevTargets=JSON.parse(JSON.stringify(DB.targets||{}));
+    ok.forEach(function(c){DB.targets[c.name]=c.next});
+    DB.coach.acceptedId=r.id; DB.coach.acceptedOn=today();
+    save(); renderAll(); toast(ok.length+" load"+(ok.length===1?"":"s")+" updated"); return;
+  }
+  if(e.target.closest("#btnUndoAccept")){
+    if(!DB.coach.prevTargets) return;
+    DB.targets=DB.coach.prevTargets; DB.coach.prevTargets=null;
+    DB.coach.acceptedId=null; DB.coach.acceptedOn=null;
+    save(); renderAll(); toast("Reverted to the previous loads");
+  }
+});
+
 /* ═══════════ nav ═══════════ */
-var TITLES={today:"Today",lift:"Lift",cardio:"Cardio+",hist:"History",data:"Data"};
+var TITLES={today:"Today",lift:"Lift",cardio:"Cardio+",coach:"Coach",hist:"History",data:"Data"};
 function go(v){
   document.querySelectorAll(".view").forEach(function(s){s.classList.toggle("on",s.id==="v-"+v)});
   document.querySelectorAll("nav button").forEach(function(b){b.setAttribute("aria-current",String(b.dataset.v===v))});
@@ -1451,19 +1967,22 @@ function go(v){
   if(v==="data") renderData();
   if(v==="lift") renderSession();
   if(v==="cardio") renderHR();
+  if(v==="coach"){ renderCoach(); markReviewSeen(); }
 }
 document.querySelector("nav").addEventListener("click",function(e){
   var b=e.target.closest("button[data-v]"); if(b) go(b.dataset.v);
 });
 document.getElementById("v-today").addEventListener("click",function(e){
   var b=e.target.closest("[data-jump]"); if(!b) return;
+  if(b.dataset.jump==="mob"){ curSession="M"; mobRoutine="post"; go("lift"); return; }
   go("cardio");
   var id = b.dataset.jump==="bw" ? "bwCard" : b.dataset.jump==="vitals" ? "vitalsCard" : null;
   if(id) setTimeout(function(){document.getElementById(id).scrollIntoView({block:"start"})},60);
 });
 
-function renderAll(){renderToday();renderSession();renderHist();renderData()}
+function renderAll(){renderToday();renderSession();renderHist();renderData();renderCoach();renderSyncStatus()}
 buildScales(); wirePickers(); renderAll(); go("today");
+syncBoot();
 </script>
 </body>
 </html>
