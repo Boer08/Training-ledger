@@ -180,6 +180,25 @@ pre.out{font-family:var(--mono);font-size:11px;line-height:1.5;white-space:pre-w
 .mrow .mn{font-weight:600;font-size:14.5px}
 .mrow .md{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
 .mrow .mm{font-size:12px;color:var(--amber);margin-top:4px;line-height:1.45}
+/* mobility figures — one wrapper per drill so the tick row, the toggle bar
+   and the figure panel are siblings and only the row carries the tick */
+.mwrap{border-bottom:1px solid var(--line-soft)}
+.mwrap:last-child{border-bottom:0}
+.mwrap .mrow{border-bottom:0;padding-bottom:6px}
+.mbar{display:flex;gap:8px;padding:0 0 11px 37px}
+.mtog{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);text-decoration:none;
+  border:1px solid var(--line);border-radius:7px;padding:6px 9px;line-height:1.2}
+.mtog[aria-expanded="true"]{color:var(--ink);border-color:var(--ink-3)}
+.mfig{display:flex;gap:8px;padding:0 0 6px 37px}
+.mfig figure{flex:1;max-width:190px;margin:0}
+.mfig svg{display:block;width:100%;height:auto;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:9px}
+.mfig figcaption{font-size:11.5px;color:var(--ink-2);margin-top:5px;line-height:1.35}
+.mfig .fb{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.mfig .ft{stroke:var(--green);stroke-width:3.6}
+.mfig .fp{fill:none;stroke:var(--ink-3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mfig .fd{stroke-dasharray:3 4}
+.mfig .fa{fill:none;stroke:var(--ink-2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mleg{font-size:11px;color:var(--ink-3);padding:0 0 12px 37px;line-height:1.4}
 
 /* coach review */
 .lrow{padding:11px 0;border-bottom:1px solid var(--line-soft)}
@@ -295,6 +314,35 @@ nav button[aria-current="true"]{color:var(--tier)}
 <!-- ══════════ CARDIO / ISO ══════════ -->
 <section class="view" id="v-cardio"><div class="wrap">
 
+  <div class="card" id="runWhenCard"></div>
+
+  <div class="card" id="runCard"></div>
+
+  <div class="card">
+    <div class="eyebrow">Bike intervals</div>
+    <div class="field">
+      <label>Format</label>
+      <div class="seg" data-k="ivfmt">
+        <button data-v="10/20">10 s / 20 s · all-out</button><button data-v="30/15">30 s / 15 s · HR-gated</button>
+      </div>
+    </div>
+    <div id="ivSpec" class="specline" style="margin-top:0"></div>
+    <div class="row" style="gap:8px">
+      <div class="field" style="flex:1"><label>Reps completed</label><input id="ivReps" type="number" inputmode="numeric" placeholder="8"></div>
+      <div class="field" style="flex:1"><label>Peak HR</label><input id="ivHR" type="number" inputmode="numeric" placeholder="bpm"></div>
+    </div>
+    <div class="field" id="ivHeldWrap">
+      <label>Did HR hold the target from rep 5 to the end?</label>
+      <div class="seg" data-k="ivheld"><button data-v="yes">Yes</button><button data-v="no">No — faded</button></div>
+    </div>
+    <div class="field" id="ivDecayWrap">
+      <label>Did power hold up, or did the last reps fall away?</label>
+      <div class="seg" data-k="ivdecay"><button data-v="held">Held</button><button data-v="faded">Faded — ended the set</button></div>
+    </div>
+    <button class="btn go" id="saveIv">Save intervals</button>
+    <div class="caution" id="ivCaution"></div>
+  </div>
+
   <div class="card">
     <div class="eyebrow">Aerobic target — heart rate</div>
     <div class="hrband">
@@ -311,7 +359,7 @@ nav button[aria-current="true"]{color:var(--tier)}
       <label>Type</label>
       <div class="seg" data-k="cmode">
         <button data-v="Ride">Ride</button><button data-v="Stair climber">Stairs</button>
-        <button data-v="Run">Run</button><button data-v="Walk">Walk</button>
+        <button data-v="Walk">Walk</button>
       </div>
     </div>
     <div class="row" style="gap:8px">
@@ -483,8 +531,34 @@ function canStore(){try{localStorage.setItem("__t","1");localStorage.removeItem(
 memOnly=!canStore();
 if(memOnly) document.getElementById("storeWarn").style.display="block";
 
-var BLANK={version:8,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
-           mobility:[],targets:{},
+/* ═══════════ run-walk ladder ═══════════
+   Eight weekly steps, 2 runs per week, then continuous running. The ladder is an energy-storage progression,
+   not a fitness plan: slow heavy work (box squat, leg press) builds tendon
+   capacity but does not train the rapid stretch-shorten cycling a jog asks
+   for. Running at an easy pace IS the stage-3 stimulus here, dosed by
+   run-walk intervals rather than by added gym plyometrics — that keeps the
+   45-minute lifting cap intact. Honest limit: no trial has tested this
+   substitution; the staging is from the Cook/Malliaras/Purdam model and the
+   dosing is reasoning from load specificity.
+   Defined above BLANK because migrate() clamps the stored step against it. */
+var LADDER=[
+  {reps:6, run:60,  walk:120, label:"6 × (1 min run / 2 min walk)",   total:"6 min running"},
+  {reps:6, run:60,  walk:120, label:"6 × (1 min run / 2 min walk)",   total:"6 min running"},
+  {reps:6, run:120, walk:90,  label:"6 × (2 min run / 1.5 min walk)", total:"12 min running"},
+  {reps:6, run:120, walk:90,  label:"6 × (2 min run / 1.5 min walk)", total:"12 min running"},
+  {reps:4, run:240, walk:60,  label:"4 × (4 min run / 1 min walk)",   total:"16 min running"},
+  {reps:4, run:240, walk:60,  label:"4 × (4 min run / 1 min walk)",   total:"16 min running"},
+  {reps:2, run:600, walk:120, label:"2 × (10 min run / 2 min walk)",  total:"20 min · about 2.5–3 km"},
+  {reps:2, run:600, walk:120, label:"2 × (10 min run / 2 min walk)",  total:"20 min · about 2.5–3 km"},
+  {reps:1, run:null,walk:null,label:"Continuous · 3 km (second run of the week stays 2 km)", total:"3 km"}
+];
+/* one step is one week of two runs: a step is only left behind after this
+   many clean runs at it, so passing every run takes eight weeks, not four */
+var RUNS_PER_STEP=2;
+
+var BLANK={version:9,checks:[],sessions:[],cardio:[],iso:[],weight:[],vitals:[],
+           mobility:[],runs:[],targets:{},
+           ladder:{step:1,startedOn:null,drops:0,passes:0,repeats:0},
            coach:{review:null,fetchedAt:null,seenId:null,acceptedId:null,acceptedOn:null,prevTargets:null},
            blockStart:null,lastExport:null};
 
@@ -498,7 +572,7 @@ function migrate(o){
   /* v5 → v6: sessions may carry a free-text `note` and an `amberOver` flag
      (both optional, absent on old rows). The block counter is reset once. */
   if(fromVersion!==null && fromVersion<6) o.blockStart=REENTRY_BLOCK_START;
-  ["checks","sessions","cardio","iso","weight","vitals","mobility"].forEach(function(k){
+  ["checks","sessions","cardio","iso","weight","vitals","mobility","runs"].forEach(function(k){
     if(!Array.isArray(o[k])) o[k]=[];
   });
   /* v7 → v8: three new containers, all empty on old data.
@@ -527,7 +601,21 @@ function migrate(o){
      old `rpe` field is left in place and still printed if present. */
   /* v6 → v7: iso entries may carry a `modes` array (multi-select) and an
      optional `minutes`. Old rows keep their single `mode` string untouched. */
-  o.version=8;
+  /* v8 → v9: two new containers.
+       runs   — [{date,step,minutes,km,painDuring,gate2,hrMax,note}]
+                One row per logged run. gate2 is null until the next-morning
+                question is answered, so an unanswered run is findable.
+       ladder — {step,startedOn,drops,passes,repeats} the run-walk ladder
+                position. Step only ever moves by one, through runResult().
+                `passes` counts clean runs at the current step, `repeats`
+                consecutive poor next-mornings, `drops` consecutive
+                drop-backs so two in a row can be surfaced rather than
+                silently cycling.
+     Nothing in v8 is rewritten, so a v8 backup restores cleanly. */
+  if(!o.ladder||typeof o.ladder!=="object"||Array.isArray(o.ladder)) o.ladder={};
+  o.ladder=Object.assign({step:1,startedOn:null,drops:0,passes:0,repeats:0},o.ladder);
+  if(!(o.ladder.step>=1&&o.ladder.step<=LADDER.length)) o.ladder.step=1;
+  o.version=9;
   return o;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){
@@ -559,7 +647,7 @@ function toast(m){var t=document.getElementById("toast");t.textContent=m;t.class
 /* first date across every record type — the honest denominator */
 function firstDate(){
   var d=null;
-  [DB.sessions,DB.cardio,DB.iso,DB.checks,DB.weight,DB.vitals,DB.mobility].forEach(function(a){
+  [DB.sessions,DB.cardio,DB.iso,DB.checks,DB.weight,DB.vitals,DB.mobility,DB.runs].forEach(function(a){
     a.forEach(function(x){if(!d||x.date<d)d=x.date});
   });
   return d;
@@ -567,17 +655,52 @@ function firstDate(){
 function daysOfData(){var f=firstDate();return f?Math.max(1,daysBetween(f,today())+1):0}
 
 /* ═══════════ heart rate zones ═══════════
-   Age-predicted HRmax (Tanaka: 208 − 0.7 × age) carries a standard
-   deviation of roughly 7–11 bpm, so every number below is an estimate,
-   not a measurement. The talk test overrides the number, always. */
+   Both age formulas give 180 at age 40 (Tanaka 208 − 0.7 × 40 = 180,
+   Fox 220 − 40 = 180) and both carry a standard error of estimate around
+   7–12 bpm, so agreement between them says nothing about accuracy for one
+   person. Regularly touching the mid-170s in training is not compatible
+   with a true max of 180 — that would mean routinely working at ~97% of
+   maximum — so the provisional figure here is 188, which is reasoning from
+   observed training heart rates, not a measurement.
+
+   The number then self-corrects upward: the highest peak HR logged in the
+   last 56 days wins if it exceeds the provisional figure. An observed HR
+   can only ever sit at or below true max, so observation is a floor, never
+   a ceiling — a quiet 8 weeks must not drag the brackets down. Every hard
+   interval session is therefore a partial max test. The talk test still
+   overrides the number, always. */
 var AGE=40;
 var HR_REST_FALLBACK=48;
+var HR_MAX_PROVISIONAL=188;
+var HR_MAX_WINDOW=56;
 
 function restingHR(){
   if(DB.vitals.length) return DB.vitals[DB.vitals.length-1].rhr;
   return HR_REST_FALLBACK;
 }
-function hrMaxEst(){ return Math.round(208-0.7*AGE); }
+/* highest peak HR seen in the window, across cardio and runs; 0 if none */
+function observedHRmax(){
+  var m=0;
+  function scan(arr){
+    within(arr,HR_MAX_WINDOW).forEach(function(x){
+      var v=parseInt(x.hrMax,10);
+      if(v&&v>m&&v<230) m=v;                 /* 230 guards a fat-finger entry */
+    });
+  }
+  scan(DB.cardio); scan(DB.runs||[]);
+  return m;
+}
+function hrMaxEst(){ return Math.max(HR_MAX_PROVISIONAL, observedHRmax()); }
+function hrMaxBasis(){
+  var o=observedHRmax();
+  return o>HR_MAX_PROVISIONAL
+    ? {max:o, measured:true,  note:"highest peak logged in the last 8 weeks"}
+    : {max:HR_MAX_PROVISIONAL, measured:false, note:"provisional, from observed training heart rates"};
+}
+/* interval targets are %HRmax, not %reserve — that is how the 30/15 and
+   4×4 literature prescribes them, and mixing the two conventions silently
+   shifts the target by several bpm */
+function hrPct(p){ return Math.round(hrMaxEst()*p); }
 function hrZones(){
   var r=restingHR(), m=hrMaxEst(), res=m-r;
   return {
@@ -593,12 +716,15 @@ function renderHR(){
   document.getElementById("hrEasy").textContent="< "+z.easyHi;
   document.getElementById("hrBase").textContent=z.baseLo+"–"+z.baseHi;
   document.getElementById("hrCap").textContent=z.cap;
+  var b=hrMaxBasis();
   document.getElementById("hrExplain").innerHTML=
-    "Calculated from resting HR "+z.rest+" and an <b>age-estimated</b> max of "+z.max+
-    " (208 − 0.7 × age), using percentages of heart-rate reserve. That max estimate has a standard deviation of roughly 7–11 bpm across individuals, so treat "+
-    z.baseLo+"–"+z.baseHi+" as a starting bracket rather than a measured zone. "+
+    "Calculated from resting HR "+z.rest+" and a working max of <b>"+z.max+"</b> ("+b.note+"), using percentages of heart-rate reserve. "+
+    (b.measured
+      ? "This is now driven by your own logged peaks rather than by a formula — every hard interval session updates it."
+      : "Both age formulas give 180 at 40, but regularly reaching the mid-170s in training is not compatible with a true max of 180, so 188 is the working figure until you log something higher. Log the peak HR on hard sessions and this corrects itself.")+
+    " Treat "+z.baseLo+"–"+z.baseHi+" as a bracket, not a measured zone. "+
     "<b>The talk test outranks the number:</b> if you cannot speak a full sentence, you are above the bracket whatever the watch says — drop the resistance, keep the cadence. "+
-    "Two rides a week of 40–45 min inside the bracket. Intervals come back only after two consecutive weeks of two rides. Aerobic training is one of the two strongest non-drug levers on blood pressure.";
+    "Two rides a week of 40–45 min inside the bracket. Bike intervals are a separate card above: after session B or C, once a week while the run ladder is still progressing. Aerobic training is one of the two strongest non-drug levers on blood pressure.";
   document.getElementById("cardioCaution").innerHTML=
     "Target "+z.baseLo+"–"+z.baseHi+" bpm, hard ceiling "+z.cap+". Cadence 95–105 rpm at low resistance — patellar tendon and patellofemoral force track <i>pedal force</i>, so spin light rather than grind. Seated only while the tendon is symptomatic. "+
     "Stair climber is not neutral for you: it is a repeated knee-extensor exposure and it belongs in the tendon count, not the free-cardio count. Keep it short, or use it on a day you have not squatted.";
@@ -835,6 +961,7 @@ function wirePickers(root){
         }
       }
       if(k==="imode") updateIsoFields();
+      if(k==="ivfmt") renderIntervals();
     });
   });
 }
@@ -922,6 +1049,11 @@ function renderTodayAlerts(){
   if(gap===0 && !DB.mobility.some(function(m){return m.date===today()}))
     out+='<div class="alert ok"><b>Lifted today — mobility not logged</b>Post-lift block, about 17 min.'+
       '<button class="btn slim" data-jump="mob" style="margin-top:9px">→ Mobility (post-lift)</button></div>';
+
+  /* the second run gate is only useful if it is actually answered */
+  var pr=pendingRun();
+  if(pr) out+='<div class="alert ok"><b>Run on '+pretty(pr.date)+' — one question left</b>Had it settled within 24 h? The ladder does not move until this is answered.'+
+    '<button class="btn slim" data-jump="cardio" style="margin-top:9px">→ Answer in Cardio+</button></div>';
 
   if(syncOn()&&SY.lastErr) out+='<div class="alert warn"><b>Sync failed</b>'+esc(SY.lastErr)+'. The log is safe on this phone; it uploads again next time the app opens, or use Data → Sync now.</div>';
 
@@ -1262,8 +1394,270 @@ document.getElementById("saveWeight").addEventListener("click",function(){
   save(); renderAll(); toast("Weight saved"); go("today");
 });
 
+/* ═══════════ bike intervals ═══════════
+   Two formats, kept deliberately distinct because they are prescribed by
+   different instruments.
+
+   10 s / 20 s — all-out. Heart rate is useless as a target here: HR lags
+   effort by roughly 30–60 s, so in a 10 s bout it is still responding to
+   the previous rep. A maximal 10 s effort cannot be paced, so "all-out" is
+   already unambiguous and needs no measurement. What does need watching is
+   decay: 20 s is not enough to restore phosphocreatine, so power falls
+   across reps and the set ends when it falls away. Short sprint interval
+   training (≤10 s bouts) does improve VO2max — Boullosa 2022, pooled SMD
+   −0.56 — but 6 reps is 60 s of total work and under-dosed, hence a floor
+   of 8.
+
+   30 s / 15 s — HR-gated. The bout is long enough, and the 15 s recovery
+   short enough, that HR ratchets up across reps and stays there. That is
+   the accumulated time near VO2max which drives the adaptation, and it
+   makes %HRmax a valid target from about rep 5 onward.
+
+   Both save into DB.cardio so frequency counts, history and the export
+   keep working without new plumbing. */
+var IVF={
+  "10/20":{base:8, cap:12, gate:"ivdecay", pass:"held",
+           spec:function(){return "All-out, no HR target — a maximal 10 s effort cannot be paced, so the effort defines itself. Watch decay instead: end the set when the last reps clearly fall away. Build 8 → 12 reps."}},
+  "30/15":{base:10,cap:14, gate:"ivheld",  pass:"yes",
+           spec:function(){return "Target <b>"+hrPct(0.90)+" bpm</b> (90% of max "+hrMaxEst()+") from rep 5 to the end — not on rep 1, HR has not arrived yet. Spin high cadence against moderate resistance. Build 10 → 14 reps."}}
+};
+function ivFmt(){ return segVal("ivfmt")||"30/15"; }
+function ivHistory(f){ return DB.cardio.filter(function(x){return x.fmt===f}); }
+function ivPrescribed(f){
+  var c=IVF[f], passed=ivHistory(f).filter(function(x){return x.quality==="pass"}).length;
+  return Math.min(c.cap, c.base+passed);
+}
+function renderIntervals(){
+  var f=ivFmt(), c=IVF[f];
+  var sel=document.querySelector('.seg[data-k="ivfmt"]');
+  if(sel&&!sel.dataset.val){
+    sel.dataset.val=f;
+    sel.querySelectorAll("button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===f))});
+  }
+  document.getElementById("ivSpec").innerHTML=c.spec();
+  document.getElementById("ivReps").placeholder=String(ivPrescribed(f));
+  document.getElementById("ivHeldWrap").style.display  = f==="30/15"?"block":"none";
+  document.getElementById("ivDecayWrap").style.display = f==="10/20"?"block":"none";
+  document.getElementById("ivHR").parentNode.style.display = "block";
+  var mins=f==="10/20" ? (ivPrescribed(f)*30/60).toFixed(1) : (ivPrescribed(f)*45/60).toFixed(1);
+  document.getElementById("ivCaution").innerHTML=
+    "Next session: <b>"+ivPrescribed(f)+" reps</b>, about "+mins+" min. One rep is added only after a session where the quality gate passed — reps bought by grinding through a faded set are not progress. "+
+    "After session B or C, never after A. Log the peak HR: it is what keeps your max estimate honest.";
+}
+document.getElementById("saveIv").addEventListener("click",function(){
+  var f=ivFmt(), c=IVF[f];
+  var reps=parseInt(document.getElementById("ivReps").value,10);
+  if(!reps){toast("Reps?");return}
+  var g=segVal(c.gate);
+  if(!g){toast("Answer the quality question");return}
+  var hr=parseInt(document.getElementById("ivHR").value,10)||null;
+  var quality = (g===c.pass) ? "pass" : "short";
+  var secs = f==="10/20" ? reps*30 : reps*45;
+  DB.cardio.push({date:today(),mode:"Intervals "+f,fmt:f,reps:reps,quality:quality,
+    minutes:Math.max(1,Math.round(secs/60)),hr:null,hrMax:hr||null,talk:null});
+  DB.cardio.sort(function(a,b){return a.date<b.date?-1:1});
+  ["ivReps","ivHR"].forEach(function(id){document.getElementById(id).value=""});
+  [c.gate].forEach(function(k){
+    var el=document.querySelector('[data-k="'+k+'"]'); if(!el) return;
+    el.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});
+    delete el.dataset.val;
+  });
+  var before=hrMaxEst();
+  save(); renderAll();
+  var after=hrMaxEst();
+  toast(after>before ? "Saved — max raised to "+after+", brackets updated"
+      : quality==="pass" ? "Saved — next session "+ivPrescribed(f)+" reps"
+      : "Saved — same rep count next time");
+  go("today");
+});
+
+/* ═══════════ runs ═══════════
+   Two gates, both required to advance a step.
+     gate 1  pain ≤3/10 during the run      — asked on save
+     gate 2  settled within 24 h, next morning no worse — asked the next day
+   Failing gate 1 drops a step immediately; failing gate 2 repeats the week.
+   Two consecutive drops means the ladder is wrong rather than the run, and
+   that gets surfaced rather than quietly cycling. */
+function ladder(){ return DB.ladder||(DB.ladder={step:1,startedOn:null,drops:0,passes:0,repeats:0}); }
+function ladderStep(){ return LADDER[Math.min(LADDER.length,Math.max(1,ladder().step))-1]; }
+function ladderDone(){ return ladder().step>=LADDER.length; }
+function ladderTitle(){ return ladderDone() ? "Ladder complete · continuous running" : "Week "+ladder().step+" of "+(LADDER.length-1); }
+function pendingRun(){
+  for(var i=DB.runs.length-1;i>=0;i--){
+    var r=DB.runs[i];
+    if(r.gate2===null&&r.date<today()) return r;
+  }
+  return null;
+}
+function runsThisWeek(){ return within(DB.runs,7).length; }
+/* the only place the ladder moves.
+     clean  — both gates passed. Two clean runs at a step advance it.
+     repeat — gate 2 failed. Clean-run count resets: the week is repeated.
+              A second consecutive poor morning drops a step.
+     drop   — gate 1 failed. One step back at once.
+   Returns "advanced", "dropped" or "held". */
+function runResult(kind,why){
+  var L=ladder(), out="held";
+  if(!L.startedOn) L.startedOn=today();
+  if(kind==="repeat"){
+    L.passes=0; L.repeats=(L.repeats||0)+1;
+    if(L.repeats>=2){ kind="drop"; why="second poor next-morning in a row"; }
+  }
+  if(kind==="drop"){
+    L.step=Math.max(1,L.step-1); L.passes=0; L.repeats=0; L.drops=(L.drops||0)+1; out="dropped";
+  } else if(kind==="clean"){
+    L.drops=0; L.repeats=0; L.passes=(L.passes||0)+1;
+    if(L.passes>=RUNS_PER_STEP&&L.step<LADDER.length){ L.step++; L.passes=0; out="advanced"; }
+  }
+  L.lastWhy=why||null;
+  save();
+  return out;
+}
+document.getElementById("runCard").addEventListener("click",function(e){
+  var g=e.target.closest("[data-g2]");
+  if(g){
+    var r=pendingRun(); if(!r) return;
+    var ok=g.dataset.g2==="yes";
+    r.gate2=ok?"pass":"fail";
+    var res=runResult(ok?"clean":"repeat", ok?"both gates passed":"settled poorly — week repeated");
+    renderAll();
+    toast(res==="advanced" ? "Advanced — "+ladderTitle()
+        : res==="dropped"  ? "Second poor morning — back one step"
+        : ok ? "Clean run "+ladder().passes+" of "+RUNS_PER_STEP+" at this step"
+             : "Week repeated — clean runs reset");
+    return;
+  }
+  if(e.target.closest("#saveRun")){
+    var mins=parseInt(document.getElementById("rMin").value,10);
+    if(!mins){toast("Minutes?");return}
+    var pain=scaleVal("rpain");
+    if(pain===null){toast("Pain during the run?");return}
+    var km=parseFloat(document.getElementById("rKm").value)||null;
+    var hr=parseInt(document.getElementById("rHR").value,10)||null;
+    var failed=pain>3;
+    DB.runs.push({date:today(),step:ladder().step,minutes:mins,km:km,
+      painDuring:pain,hrMax:hr,gate2:failed?"skipped":null});
+    DB.runs.sort(function(a,b){return a.date<b.date?-1:1});
+    if(failed) runResult("drop","pain above 3/10 during the run");
+    else save();
+    renderAll();
+    toast(failed?"Logged — gate 1 failed, back one step"
+                :"Run logged — the 24 h question comes tomorrow");
+    go("today");
+  }
+});
+function renderRunCard(){
+  var el=document.getElementById("runCard"); if(!el) return;
+  var L=ladder(), st=ladderStep(), pend=pendingRun();
+  var html='<div class="spread" style="margin-bottom:10px"><span class="eyebrow" style="margin:0">Run-walk ladder</span>'+
+    '<span class="mono" style="font-size:13px;color:var(--ink-3)">'+runsThisWeek()+' / 2 this week</span></div>';
+  html+='<div class="spread"><span class="muted">'+ladderTitle()+'</span>'+
+    '<span class="mono"><b>'+esc(st.total)+'</b></span></div>';
+  html+='<div class="specline" style="margin-top:6px"><b>'+esc(st.label)+'</b>'+
+    (ladderDone()?'':'<br>Clean runs at this step: '+(L.passes||0)+' of '+RUNS_PER_STEP+' — two advance it.')+'</div>';
+
+  if(L.drops>=2)
+    html+='<div class="alert stop" style="margin-top:10px"><b>Two drop-backs in a row</b>'+
+      'That is the ladder being wrong for you, not a bad run. Stop advancing and raise it at the next review rather than cycling through the same step.</div>';
+
+  if(pend){
+    html+='<div class="alert ok" style="margin-top:12px"><b>Run on '+pretty(pend.date)+' — the 24 h question</b>'+
+      'Had it settled within 24 hours, with the next morning no worse than usual?'+
+      '<div class="seg" style="margin-top:10px">'+
+      '<button data-g2="yes">Yes — settled</button>'+
+      '<button data-g2="no">No — lingered</button></div></div>';
+    el.innerHTML=html;
+    return;
+  }
+
+  html+='<div class="row" style="gap:8px;margin-top:12px">'+
+    '<div class="field" style="flex:1"><label>Minutes</label><input id="rMin" type="number" inputmode="numeric" placeholder="'+
+      (st.run?Math.round((st.reps*(st.run+st.walk))/60):25)+'"></div>'+
+    '<div class="field" style="flex:1"><label>Distance (km)</label><input id="rKm" type="number" inputmode="decimal" step="0.1" placeholder="optional"></div></div>';
+  html+='<div class="field"><label>Peak HR</label><input id="rHR" type="number" inputmode="numeric" placeholder="optional"></div>';
+  html+='<div class="field"><label>Tendon pain during the run (0–10)</label><div class="scale wide" data-k="rpain"></div></div>';
+  html+='<button class="btn go" id="saveRun">Save run</button>';
+  html+='<div class="caution">Gate 1 is this pain score: <b>above 3/10 drops a step immediately</b>. Gate 2 is tomorrow morning — settled within 24 h and no worse on waking. A run that passes both is a clean run; two clean runs move you on. '+
+    'Easy pace throughout; the walk intervals are the dose control, not a rest you can skip.</div>';
+  el.innerHTML=html;
+  buildScales();
+  wirePickers(el);
+}
+
+/* ═══════════ can I run today? ═══════════
+   There is no week planner in this build, so the verdict is driven by what
+   comes next in the A→B→C rotation plus a one-tap override for tomorrow.
+   The rule: never the day before A (box squat) or B (leg press) — both are
+   heavy knee-extensor days, and a run the day before lands an
+   energy-storage load on the tendon immediately ahead of slow heavy work.
+   C is hip-dominant, so the day before C is free. Running on the same day
+   as lifting, or the day after, is always fine. */
+var ROT=["A","B","C"];
+function lastSessionType(){
+  for(var i=DB.sessions.length-1;i>=0;i--) if(DB.sessions[i].type) return DB.sessions[i].type;
+  return null;
+}
+function nextSessionDue(){
+  var l=lastSessionType();
+  if(!l) return "A";
+  var i=ROT.indexOf(l);
+  return i<0?"A":ROT[(i+1)%3];
+}
+var tomorrowPlan=null;
+function runVerdict(){
+  var plan=tomorrowPlan||nextSessionDue();
+  var liftedToday=DB.sessions.some(function(s){return s.date===today()});
+  if(liftedToday)
+    return {ok:true, head:"Run today — after the lift", why:"You have already lifted today. Running the same day, after the barbell work, is always fine: the recovery day that follows serves both."};
+  if(plan==="A")
+    return {ok:false,head:"Not today — box squat tomorrow", why:"Session A is your heaviest slow-loaded knee-extensor work. A run today puts an energy-storage load on the tendon the day before it."};
+  if(plan==="B")
+    return {ok:false,head:"Not today — leg press tomorrow", why:"Session B carries the leg press, which is two of your three weekly tendon exposures. Same reasoning as A: not the day before. Running <i>after</i> B tomorrow, or the day after, is fine."};
+  if(plan==="C")
+    return {ok:true, head:"Run today — C tomorrow is fine", why:"Session C is hip-dominant: RDL, incline press, pull-ups. No heavy knee-extensor load the next day, so the day before C is free."};
+  return {ok:true, head:"Run today", why:"No knee-heavy session tomorrow."};
+}
+function renderRunWhen(){
+  var el=document.getElementById("runWhenCard"); if(!el) return;
+  var v=runVerdict(), plan=tomorrowPlan||nextSessionDue();
+  var days=[],i;
+  for(i=6;i>=0;i--){
+    var d=shift(today(),-i);
+    var s=DB.sessions.filter(function(x){return x.date===d})[0];
+    var ran=DB.runs.some(function(x){return x.date===d});
+    days.push({d:d,lab:["S","M","T","W","T","F","S"][new Date(d+"T00:00:00").getDay()],
+               mark:s?s.type:(ran?"↗":"·"), run:ran, lift:!!s, today:i===0});
+  }
+  var html='<div class="eyebrow">Can I run today?</div>';
+  html+='<div class="spread" style="margin:4px 0 12px">'+days.map(function(x){
+    return '<div style="text-align:center;flex:1">'+
+      '<div class="tiny" style="color:var(--ink-3)">'+x.lab+'</div>'+
+      '<div class="mono" style="font-size:15px;font-weight:600;opacity:'+(x.today?1:0.55)+'">'+x.mark+'</div></div>';
+  }).join("")+'</div>';
+  html+='<div class="alert '+(v.ok?"ok":"stop")+'"><b>'+v.head+'</b>'+v.why+'</div>';
+  html+='<div class="field" style="margin-top:12px"><label>Tomorrow — next due is '+nextSessionDue()+'</label>'+
+    '<div class="seg" style="margin-top:6px">'+["A","B","C","Rest"].map(function(k){
+      return '<button data-tp="'+k+'" aria-pressed="'+String(plan===k)+'">'+k+'</button>';
+    }).join("")+'</div></div>';
+  html+='<div class="specline">Letters are logged sessions, ↗ is a run. Two runs a week. The rule in one line: <b>run on the same day as lifting or the day after — never the day before A or B.</b></div>';
+  el.innerHTML=html;
+}
+document.getElementById("runWhenCard").addEventListener("click",function(e){
+  var t=e.target.closest("[data-tp]");
+  if(t){ tomorrowPlan=t.dataset.tp; renderRunWhen(); }
+});
+
 /* ═══════════ history ═══════════ */
 function within(arr,n){var c=shift(today(),-(n-1));return arr.filter(function(x){return x.date>=c})}
+
+/* Energy-storage exposures are counted SEPARATELY from tendon exposures and
+   never folded into them. The tendon count is heavy slow resistance — box
+   squat, leg press, Spanish squat, wall sit — which builds tendon capacity
+   under slow high load. Energy storage is rapid stretch-shorten cycling,
+   which is what a jog actually demands and what HSR does not train. Merging
+   the two would make the three-per-week tendon target meaningless, because
+   a week of running would read as a week of heavy slow loading. */
+function esCount(days){ return within(DB.runs,days).length; }
 
 /* isometric exposures = standalone entries + any session that logged one */
 function isoCount(days){
@@ -1295,6 +1689,8 @@ function renderHist(){
     line("Barbell sessions",s.length,s.length/weeks,3)+'<div class="hr"></div>'+
     line("Tendon exposures",tend,tend/weeks,3)+'<div class="hr"></div>'+
     line("Cardio",c.length,c.length/weeks,2)+'<div class="hr"></div>'+
+    line("Runs",within(DB.runs,win).length,within(DB.runs,win).length/weeks,2)+'<div class="hr"></div>'+
+    line("Energy-storage exposures",esCount(win),esCount(win)/weeks,0)+'<div class="hr"></div>'+
     line("Isometrics",i,i/weeks,0)+'<div class="hr"></div>'+
     line("Mobility",mob.length,mob.length/weeks,3)+'<div class="hr"></div>'+
     '<div class="spread"><span class="muted">Morning checks</span><span class="mono"><b>'+ch.length+'</b> of '+win+'</span></div>';
@@ -1340,6 +1736,8 @@ function renderHist(){
     all.push({d:x.date,t:"Isometrics",s:esc(isoText(x," · "))+
       (nx&&isKneeIso(x)?" · next AM decline "+nx.decline:"")})});
   DB.mobility.forEach(function(x){all.push({d:x.date,t:"Mobility",s:mobText(x," · ")})});
+  DB.runs.forEach(function(x){all.push({d:x.date,t:"Run",s:"step "+x.step+" · "+x.minutes+" min"+(x.km?" · "+x.km+" km":"")+
+    " · pain "+x.painDuring+"/10 · 24 h gate "+(x.gate2===null?"unanswered":x.gate2)})});
   DB.weight.forEach(function(x){all.push({d:x.date,t:"Weight",s:x.kg.toFixed(1)+" kg"+(x.bf?" · "+x.bf+"% bf":"")})});
   DB.vitals.forEach(function(x){all.push({d:x.date,t:"Vitals",s:"RHR "+x.rhr+(x.hrv?" · HRV "+x.hrv:"")+(x.status?" · "+x.status:"")})});
   DB.checks.forEach(function(x){all.push({d:x.date,t:"Check",s:tierOf(x)+" · stairs "+x.stairs+" · decline "+x.decline+
@@ -1368,13 +1766,30 @@ function textExport(){
   L.push("  Isometrics: "+i);
   var mob=within(DB.mobility,win);
   L.push("  Mobility:   "+mob.length+"  ("+(mob.length/weeks).toFixed(1)+"/wk, target 3)");
+  var rn=within(DB.runs,win);
+  L.push("  Runs:       "+rn.length+"  ("+(rn.length/weeks).toFixed(1)+"/wk, target 2)");
+  L.push("  Energy storage: "+esCount(win)+"   [counted separately from tendon — HSR and stretch-shorten are different stimuli]");
   L.push("  Days since tendon / hinge / cardio: "+
     [daysAgo(lastTendon()),daysAgo(lastHinge()),daysAgo(lastCardio())].map(function(x){return x===null?"never":x}).join(" / "));
   L.push("");
 
-  var z=hrZones();
-  L.push("HEART RATE BRACKET  (resting "+z.rest+", age-estimated max "+z.max+")");
+  var z=hrZones(), hb=hrMaxBasis();
+  L.push("HEART RATE BRACKET  (resting "+z.rest+", working max "+z.max+" — "+hb.note+")");
   L.push("  Aerobic base: "+z.baseLo+"–"+z.baseHi+" bpm   ·   ceiling "+z.cap+"   ·   easy < "+z.easyHi);
+  L.push("  Interval target: "+hrPct(0.90)+" bpm (90% max) from rep 5 on the 30/15");
+  L.push("");
+
+  L.push("RUN-WALK LADDER");
+  L.push("  "+ladderTitle()+": "+ladderStep().label+"  ("+ladderStep().total+")");
+  if(!ladderDone()) L.push("  Clean runs at this step: "+(ladder().passes||0)+" of "+RUNS_PER_STEP);
+  if(ladder().lastWhy) L.push("  Last move: "+ladder().lastWhy);
+  if((ladder().drops||0)>=2) L.push("  ** TWO CONSECUTIVE DROP-BACKS — ladder needs rebuilding, not repeating **");
+  if(!DB.runs.length) L.push("  (no runs logged)");
+  DB.runs.slice(-12).forEach(function(r){
+    L.push("  "+r.date+": step "+r.step+"  ·  "+r.minutes+" min"+(r.km?"  ·  "+r.km+" km":"")+
+      "  ·  pain during "+r.painDuring+"/10"+(r.hrMax?"  ·  peak "+r.hrMax:"")+
+      "  ·  24 h gate "+(r.gate2===null?"unanswered":r.gate2));
+  });
   L.push("");
 
   L.push("BODY WEIGHT  (target ~105 kg)");
@@ -1421,6 +1836,7 @@ function textExport(){
   L.push("CARDIO");
   if(!DB.cardio.length) L.push("  (none)");
   DB.cardio.forEach(function(c){L.push("  "+c.date+": "+c.mode+" "+c.minutes+" min"+
+    (c.fmt?"  ·  "+c.reps+" reps  ·  quality gate "+(c.quality==="pass"?"passed":"not met"):"")+
     (c.cadence?" @ "+c.cadence+" rpm":"")+(c.hr?"  ·  avg HR "+c.hr:"")+
     (c.hrMax?"  ·  peak "+c.hrMax:"")+(c.rpe?"  ·  RPE "+c.rpe:"")+
     (c.talk?"  ·  talk test "+c.talk:""))});
@@ -1517,6 +1933,10 @@ function renderData(){
     ["Joint-line pain","Different signal from tendon pain. Patellar tendinopathy gives inferior-pole pain, not joint-line pain. After bilateral meniscectomy, joint-line tenderness is common and non-specific — it can reflect remnant meniscal tissue, early compartment change, or simple load irritation, and this app cannot tell you which. Persistent joint-line pain, mechanical catching or locking, or a visible effusion warrants an orthopaedic opinion rather than more load management."],
     ["Deload","Week 6, or the first amber week. Volume −40%, load held, tempo kept."],
     ["Mobility","After lifting, never before: Lift → Mobility. Post-lift block about 17 min, up to 3× a week. The full 30 min routine stands in on a non-lifting day in a week with fewer than three post-lift blocks, and counts as 1. Mobility does not count toward tendon exposure."],
+    ["Run-walk ladder","Eight weekly steps, two runs a week, then continuous running. A clean run passes two gates: pain ≤3/10 during it, and settled within 24 h with the next morning no worse. Two clean runs at a step move you on. Pain above 3/10 drops a step at once; a poor next morning repeats the week, and a second one in a row drops a step. Two drop-backs in a row means the ladder is wrong — stop and raise it at review. Runs are counted as energy-storage exposures, separately from tendon exposures."],
+    ["When to run","Same day as lifting, or the day after — never the day before A (box squat) or B (leg press). The day before C is free. Cardio+ shows today's verdict; tap what tomorrow holds if it is not the next session in the A → B → C order."],
+    ["Bike intervals","After session B or C, never after A. 10 s / 20 s is all-out with no HR target — build 8 → 12 reps, end the set when power clearly falls away. 30 s / 15 s is HR-gated at 90% of working max from rep 5 — build 10 → 14 reps. A rep is added only after a session where the quality gate passed."],
+    ["Working max heart rate","188 until you log a higher peak; after that, the highest peak HR logged in the last 8 weeks. Observation only ever raises it. Aerobic brackets use heart-rate reserve; the interval target uses % of max."],
     ["Coach review & sync","The log uploads to your private repo whenever you save while the app is open. A weekly review is written back and shown in the Coach tab. Suggested loads change nothing until you tap Accept. One tap never applies a jump of more than 10 kg, and applies no increases in a week the review flags as no-increase. Amber and red mornings still override any accepted load on the day."]
   ];
   document.getElementById("rules").innerHTML=rules.map(function(s){
@@ -1560,27 +1980,103 @@ document.getElementById("v-data").addEventListener("click",function(e){
    Mobility never counts toward tendon exposure. */
 var MOB=[
   {n:"Cat–camel",r:"Lumbar + T-spine",post:"8 slow reps",full:"8 slow reps",
-   m:"Active range only. No loaded end-range flexion after deadlifts."},
-  {n:"Open-book rotation",r:"T-spine",post:"8/side",full:"8/side"},
+   m:"Active range only. No loaded end-range flexion after deadlifts.",
+   q:"cat camel exercise spine mobility",
+   f:[{c:"Round up",h:[21,64],b:[[30,56,30,80],[80,56,80,80],[80,80,102,80],[30,56,24,61]],tq:["M30 56 Q55 30 80 56"],a:[[55,64,55,52]]},
+      {c:"Let it sag",h:[20,46],b:[[30,56,30,80],[80,56,80,80],[80,80,102,80],[30,56,24,50]],tq:["M30 56 Q55 72 80 56"],a:[[55,44,55,56]]}]},
+  {n:"Open-book rotation",r:"T-spine",post:"8/side",full:"8/side",
+   q:"open book thoracic rotation side lying",
+   f:[{c:"From above · start",nofloor:true,h:[20,45],t:[[27,45,66,45]],b:[[66,45,82,62],[82,62,102,56],[34,47,34,74],[38,47,38,74]]},
+      {c:"Open the top arm",nofloor:true,h:[20,45],t:[[27,45,66,45]],b:[[66,45,82,62],[82,62,102,56],[34,47,34,74],[38,43,38,16]],aq:[[50,70,64,45,50,20]]}]},
   {n:"Half-kneeling hip flexor stretch, glute squeezed",r:"Hip flexors",post:"2 × 30 s/side",full:"3 × 30 s/side",
-   m:"Pad under the knee; front knee at about 90°."},
-  {n:"Supine strap hamstring stretch",r:"Hamstrings",post:"2 × 30 s/side",full:"3 × 30 s/side"},
-  {n:"Supine figure-4",r:"Glutes / hip external rotation",post:"2 × 30 s/side",full:"3 × 30 s/side"},
+   m:"Pad under the knee; front knee at about 90°.",
+   q:"half kneeling hip flexor stretch",
+   f:[{c:"Pad under knee · hips forward",h:[54,18],p:[[31,77,49,77,49,81,31,81,31,77]],
+       b:[[74,80,90,80],[78,80,78,58],[78,58,54,54],[54,54,54,26],[40,75,14,79],[54,32,62,44,56,52]],t:[[54,54,40,75]],a:[[34,46,46,46]]}]},
+  {n:"Supine strap hamstring stretch",r:"Hamstrings",post:"2 × 30 s/side",full:"3 × 30 s/side",
+   q:"supine hamstring stretch with strap",
+   f:[{c:"Leg straight, strap on foot",h:[16,74],b:[[22,76,58,76],[58,76,106,78],[64,28,56,26],[26,74,42,56]],t:[[58,76,64,28]],pd:[[60,27,42,56]],a:[[80,38,70,33]]}]},
+  {n:"Supine figure-4",r:"Glutes / hip external rotation",post:"2 × 30 s/side",full:"3 × 30 s/side",
+   q:"supine figure 4 stretch glute",
+   f:[{c:"Ankle over knee, draw in",h:[16,73],b:[[22,76,56,76],[56,76,62,48],[62,48,88,46],[82,62,62,52],[26,74,44,60,60,54]],t:[[56,76,82,62]],a:[[80,38,68,38]]}]},
   {n:"Seated butterfly",r:"Adductors",post:"1 × 45 s",full:"2 × 45 s",
-   m:"Replaces rock-backs and Cossack squats, which load the knee in deep flexion."},
+   m:"Replaces rock-backs and Cossack squats, which load the knee in deep flexion.",
+   q:"seated butterfly stretch adductors",
+   f:[{c:"Soles together, knees fall out",h:[60,20],b:[[60,26,60,60],[26,70,58,78],[94,70,62,78],[60,32,44,52,56,74],[60,32,76,52,64,74]],t:[[56,62,26,70],[64,62,94,70]],a:[[20,54,20,64],[100,54,100,64]]}]},
   {n:"Side-lying quad stretch",r:"Quads",post:"2 × 30 s/side",full:"3 × 30 s/side",
-   m:"Comfortable flexion only, pain ≤3/10. No couch stretch or heel-sitting."},
-  {n:"Knee-to-wall + wall calf stretch",r:"Ankle",post:"10 reps + 30 s/side",full:"10 reps + 2 × 30 s/side"},
+   m:"Comfortable flexion only, pain ≤3/10. No couch stretch or heel-sitting.",
+   q:"side lying quad stretch",
+   f:[{c:"From above · heel toward seat",nofloor:true,h:[16,54],b:[[22,54,60,54],[90,52,72,36],[28,52,48,38,72,36],[60,58,80,72,100,66]],t:[[60,54,90,52]]}]},
+  {n:"Knee-to-wall + wall calf stretch",r:"Ankle",post:"10 reps + 30 s/side",full:"10 reps + 2 × 30 s/side",
+   q:"knee to wall ankle mobility calf stretch",
+   f:[{c:"Knee to wall, heel down",h:[75,13],p:[[106,8,106,82]],b:[[72,80,90,80],[98,58,70,46],[70,46,74,20],[70,46,54,64,40,80],[74,26,106,30]],t:[[76,80,98,58]],a:[[88,76,99,65]]},
+      {c:"Calf · back leg straight",h:[81,15],p:[[106,8,106,82]],b:[[30,80,42,80],[62,46,84,62,84,80],[84,80,96,80],[62,46,78,22],[78,28,106,28]],t:[[62,46,30,80]],a:[[22,64,22,76]]}]},
   {n:"Doorway pec stretch (≤90° abduction) + cross-body stretch",r:"Shoulder",post:"30 s each/side",full:"30 s each/side",
-   m:"No sleeper stretch and no forced end-range external rotation in abduction."},
-  {n:"Standing lat stretch on the rack",r:"Lats / overhead",post:"2 × 30 s/side",full:"3 × 30 s/side"},
+   m:"No sleeper stretch and no forced end-range external rotation in abduction.",
+   q:"doorway pec stretch and cross body shoulder stretch",
+   f:[{c:"Elbow at or below shoulder",h:[50,18],p:[[88,6,88,82]],b:[[50,24,50,56],[50,56,42,80],[50,56,58,80],[42,30,58,30],[42,30,38,52]],t:[[58,30,85,30,85,10]],a:[[40,42,26,42]]},
+      {c:"Cross-body · pull at the elbow",h:[60,18],b:[[60,24,60,58],[60,58,52,80],[60,58,68,80],[66,32,80,52,84,38]],t:[[52,32,92,34]],a:[[104,26,92,26]]}]},
+  {n:"Standing lat stretch on the rack",r:"Lats / overhead",post:"2 × 30 s/side",full:"3 × 30 s/side",
+   q:"standing lat stretch holding rack",
+   f:[{c:"Hold the upright, sit hips back",h:[74,50],p:[[102,6,102,82]],b:[[52,80,46,50],[52,80,62,80]],t:[[46,50,78,40],[78,40,102,32]],a:[[40,50,28,50]]}]},
   {n:"Chin tucks + gentle upper trap / levator stretch",r:"Neck",post:"10 reps + 30 s/side",full:"10 reps + 30 s/side",
-   m:"Breathe normally throughout. No breath-holding."},
-  {n:"90/90 hip switches",r:"Hips",full:"8/side",fullOnly:true},
-  {n:"Thoracic extension over a foam roller",r:"T-spine",full:"5 positions",fullOnly:true},
-  {n:"Prone press-ups",r:"Lumbar extension",full:"10 reps",fullOnly:true},
-  {n:"Wall slides",r:"Shoulder / scapula",full:"10 reps",fullOnly:true}
+   m:"Breathe normally throughout. No breath-holding.",
+   q:"chin tuck and upper trapezius levator scapulae stretch",
+   f:[{c:"Chin tuck · glide straight back",nofloor:true,h:[58,34,13],b:[[45,34,41,36],[60,47,58,64],[42,68,76,68],[42,68,40,88],[76,68,78,88]],a:[[50,12,70,12]]},
+      {c:"Ear to shoulder · gentle",nofloor:true,h:[68,40,13],b:[[28,70,92,70],[60,70,63,54],[92,70,101,46,80,31]],t:[[57,57,34,69]]}]},
+  {n:"90/90 hip switches",r:"Hips",full:"8/side",fullOnly:true,
+   q:"90 90 hip switches",
+   f:[{c:"From above · both knees 90°",nofloor:true,h:[60,34,7],b:[[44,40,76,40],[42,64,70,70],[90,48,86,22]],t:[[54,44,42,64],[66,44,90,48]]},
+      {c:"Switch sides, feet planted",nofloor:true,mir:true,h:[60,34,7],b:[[44,40,76,40],[42,64,70,70],[90,48,86,22]],t:[[54,44,42,64],[66,44,90,48]]}]},
+  {n:"Thoracic extension over a foam roller",r:"T-spine",full:"5 positions",fullOnly:true,
+   q:"thoracic extension foam roller",
+   f:[{c:"Roller under upper back",h:[28,68],pc:[[48,73,8]],b:[[36,66,25,57],[80,78,94,58],[94,58,104,80]],tq:["M80 78 Q58 52 36 66"],a:[[20,40,14,52]]}]},
+  {n:"Prone press-ups",r:"Lumbar extension",full:"10 reps",fullOnly:true,
+   q:"prone press up lumbar extension",
+   f:[{c:"Hips stay down",h:[31,41],b:[[64,77,110,79],[34,52,32,80]],tq:["M64 77 Q44 74 34 50"],a:[[18,64,18,50]]}]},
+  {n:"Wall slides",r:"Shoulder / scapula",full:"10 reps",fullOnly:true,
+   q:"wall slides shoulder scapula exercise",
+   f:[{c:"Back to the wall · start",h:[60,22],b:[[60,28,60,60],[60,60,52,80],[60,60,68,80]],t:[[54,32,38,42,36,24],[66,32,82,42,84,24]]},
+      {c:"Slide up, stay in contact",h:[60,22],b:[[60,28,60,60],[60,60,52,80],[60,60,68,80]],t:[[54,32,44,20,36,6],[66,32,76,20,84,6]],a:[[24,26,24,12],[96,26,96,12]]}]}
 ];
+
+/* ── mobility figures ──
+   Original schematic line drawings, generated from the coordinate lists
+   above — no third-party images, so nothing here carries a licence and it
+   all works offline. They are diagrams, not photographs: green is the
+   tissue being stretched or moved, the grey arrow is the direction, and
+   dotted or thin grey lines are props (wall, rack, strap, pad, roller).
+   Each drill has one to three; they are collapsed until tapped.
+   The demonstration link is a YouTube SEARCH for the drill, not a chosen
+   video — a specific video cannot be vetted from inside this file and
+   would rot, whereas a search always resolves. */
+function mfHead(x1,y1,x2,y2){
+  var an=Math.atan2(y2-y1,x2-x1), L=5, s=0.5;
+  function p(d){return (x2-L*Math.cos(an+d)).toFixed(1)+","+(y2-L*Math.sin(an+d)).toFixed(1)}
+  return '<polyline class="fa" points="'+p(-s)+' '+x2+','+y2+' '+p(s)+'"/>';
+}
+function mfPts(a){var o=[];for(var i=0;i<a.length;i+=2)o.push(a[i]+","+a[i+1]);return o.join(" ")}
+function figSVG(f){
+  var g="";
+  if(!f.nofloor) g+='<line class="fp" x1="6" y1="82" x2="114" y2="82"/>';
+  (f.p||[]).forEach(function(a){g+='<polyline class="fp" points="'+mfPts(a)+'"/>'});
+  (f.pd||[]).forEach(function(a){g+='<polyline class="fp fd" points="'+mfPts(a)+'"/>'});
+  (f.pc||[]).forEach(function(c){g+='<circle class="fp" cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'"/>'});
+  (f.b||[]).forEach(function(a){g+='<polyline class="fb" points="'+mfPts(a)+'"/>'});
+  (f.t||[]).forEach(function(a){g+='<polyline class="fb ft" points="'+mfPts(a)+'"/>'});
+  (f.tq||[]).forEach(function(d){g+='<path class="fb ft" d="'+d+'"/>'});
+  if(f.h) g+='<circle class="fb" cx="'+f.h[0]+'" cy="'+f.h[1]+'" r="'+(f.h[2]||5)+'"/>';
+  (f.a||[]).forEach(function(a){
+    g+='<line class="fa" x1="'+a[0]+'" y1="'+a[1]+'" x2="'+a[2]+'" y2="'+a[3]+'"/>'+mfHead(a[0],a[1],a[2],a[3]);
+  });
+  (f.aq||[]).forEach(function(a){
+    g+='<path class="fa" d="M'+a[0]+' '+a[1]+' Q'+a[2]+' '+a[3]+' '+a[4]+' '+a[5]+'"/>'+mfHead(a[2],a[3],a[4],a[5]);
+  });
+  if(f.mir) g='<g transform="translate(120,0) scale(-1,1)">'+g+'</g>';
+  return '<figure><svg viewBox="0 0 120 90" role="img" aria-label="'+esc(f.c)+'">'+g+'</svg><figcaption>'+esc(f.c)+'</figcaption></figure>';
+}
+function mobLink(d){ return "https://www.youtube.com/results?search_query="+encodeURIComponent(d.q||d.n); }
+var mobOpen={};
 var mobRoutine="post", mobTicks={post:{},full:{}};
 function mobList(r){return MOB.filter(function(d){return r==="full"||!d.fullOnly})}
 function mobText(x,sep){
@@ -1603,10 +2099,19 @@ function renderMobility(){
     ? "Straight after the last lift. Same block after A, B and C."
     : "Stand-in for a non-lifting day, in a week with fewer than 3 post-lift blocks. Counts as 1.")+'</p>';
   html+='<div class="card" style="padding-top:4px;padding-bottom:4px">'+list.map(function(d,i){
-    return '<div class="mrow" data-mtick="'+i+'" role="button" aria-pressed="'+String(!!tk[i])+'"><span class="tick">✓</span><div>'+
+    var open=!!mobOpen[d.n];
+    return '<div class="mwrap">'+
+      '<div class="mrow" data-mtick="'+i+'" role="button" aria-pressed="'+String(!!tk[i])+'"><span class="tick">✓</span><div>'+
       '<div class="mn">'+(i+1)+'. '+esc(d.n)+'</div>'+
       '<div class="md">'+esc(d.r)+' · '+esc(mobRoutine==="full"?d.full:d.post)+'</div>'+
-      (d.m?'<div class="mm">'+esc(d.m)+'</div>':'')+'</div></div>';
+      (d.m?'<div class="mm">'+esc(d.m)+'</div>':'')+'</div></div>'+
+      '<div class="mbar">'+
+        '<button class="mtog" data-mfig="'+i+'" aria-expanded="'+String(open)+'">'+(open?"Hide figure ▴":"Show figure ▾")+'</button>'+
+        '<a class="mtog" href="'+esc(mobLink(d))+'" target="_blank" rel="noopener">Demonstration ↗</a>'+
+      '</div>'+
+      (open?'<div class="mfig">'+d.f.map(figSVG).join("")+'</div>'+
+        '<div class="mleg">Green = what is being stretched or moved · arrow = direction · the link opens a video search</div>':'')+
+      '</div>';
   }).join("")+'</div>';
   html+='<button class="btn slim" id="mobAll" style="margin-bottom:8px">Tick all</button>';
   html+='<button class="btn go" id="mobDone">Mobility complete · '+done+'/'+list.length+'</button>';
@@ -1618,6 +2123,15 @@ document.getElementById("sessionBody").addEventListener("click",function(e){
   if(curSession!=="M") return;
   var mr=e.target.closest("[data-mr]");
   if(mr){ mobRoutine=mr.dataset.mr; renderMobility(); return; }
+  /* the figure toggle and the demonstration link sit outside the tick row,
+     so opening a figure never ticks the drill */
+  if(e.target.closest("a.mtog")) return;
+  var fg=e.target.closest("[data-mfig]");
+  if(fg){
+    var dn=mobList(mobRoutine)[parseInt(fg.dataset.mfig,10)];
+    if(dn){ mobOpen[dn.n]=!mobOpen[dn.n]; renderMobility(); }
+    return;
+  }
   var row=e.target.closest("[data-mtick]");
   if(row){ var i=parseInt(row.dataset.mtick,10), tk=mobTicks[mobRoutine]; tk[i]=!tk[i]; renderMobility(); return; }
   if(e.target.closest("#mobAll")){
@@ -1980,7 +2494,7 @@ document.getElementById("v-today").addEventListener("click",function(e){
   if(id) setTimeout(function(){document.getElementById(id).scrollIntoView({block:"start"})},60);
 });
 
-function renderAll(){renderToday();renderSession();renderHist();renderData();renderCoach();renderSyncStatus()}
+function renderAll(){renderToday();renderSession();renderRunWhen();renderRunCard();renderIntervals();renderHist();renderData();renderCoach();renderSyncStatus()}
 buildScales(); wirePickers(); renderAll(); go("today");
 syncBoot();
 </script>
